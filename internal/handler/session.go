@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -42,6 +43,7 @@ func (h *SessionHandler) Create(w http.ResponseWriter, r *http.Request) {
 			response.ValidationError(w, ve.Details)
 			return
 		}
+		slog.Error("failed to create session", "error", err)
 		response.Error(w, http.StatusInternalServerError, "Internal server error")
 		return
 	}

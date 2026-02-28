@@ -18,7 +18,7 @@ type SpaceSession struct {
 	CreatedBy   uuid.UUID  `json:"created_by"`
 	CreatedAt   time.Time  `json:"created_at"`
 	UpdatedAt   time.Time  `json:"updated_at"`
-	RSVPCount   int        `json:"rsvp_count,omitempty"`
+	RSVPCount   int        `json:"rsvp_count"`
 	UserRSVPed  bool       `json:"user_rsvped,omitempty"`
 }
 

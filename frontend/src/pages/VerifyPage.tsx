@@ -15,12 +15,19 @@ export default function VerifyPage() {
       return;
     }
 
-    // The backend verify endpoint sets the cookie via 302 redirect.
-    // When we land here, the cookie should already be set.
-    // We just need to refresh the auth state.
-    refresh().then(() => {
-      navigate('/', { replace: true });
-    });
+    // Call the backend verify endpoint to set the session cookie.
+    // The endpoint returns 302 which fetch follows automatically,
+    // and credentials: 'include' ensures the Set-Cookie is applied.
+    fetch(`/api/auth/verify?token=${encodeURIComponent(token)}`, {
+      credentials: 'include',
+    })
+      .then(() => refresh())
+      .then(() => {
+        navigate('/', { replace: true });
+      })
+      .catch(() => {
+        setError('Invalid or expired token.');
+      });
   }, [searchParams, navigate, refresh]);
 
   if (error) {

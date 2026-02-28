@@ -49,7 +49,7 @@ func (r *RSVPRepository) CreateAtomic(ctx context.Context, sessionID, memberID u
 	// Lock the session row and fetch it
 	var s model.SpaceSession
 	err = tx.QueryRow(ctx,
-		`SELECT id, title, description, date, start_time, end_time, capacity, status, created_by, created_at, updated_at
+		`SELECT id, title, description, date::text, to_char(start_time, 'HH24:MI'), to_char(end_time, 'HH24:MI'), capacity, status, created_by, created_at, updated_at
 		 FROM space_sessions
 		 WHERE id = $1
 		 FOR UPDATE`, sessionID,
@@ -215,7 +215,7 @@ func (r *RSVPRepository) ListEmailsBySession(ctx context.Context, sessionID uuid
 func (r *RSVPRepository) getSession(ctx context.Context, id uuid.UUID) (*model.SpaceSession, error) {
 	var s model.SpaceSession
 	err := r.pool.QueryRow(ctx,
-		`SELECT s.id, s.title, s.description, s.date, s.start_time, s.end_time, s.capacity, s.status,
+		`SELECT s.id, s.title, s.description, s.date::text, to_char(s.start_time, 'HH24:MI'), to_char(s.end_time, 'HH24:MI'), s.capacity, s.status,
 		        s.created_by, s.created_at, s.updated_at,
 		        COALESCE(COUNT(r.id), 0) AS rsvp_count
 		 FROM space_sessions s

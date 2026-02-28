@@ -79,8 +79,11 @@ func TestSpaceSessionOmitsZeroRSVPCount(t *testing.T) {
 		t.Fatalf("failed to unmarshal: %v", err)
 	}
 
-	if _, ok := raw["rsvp_count"]; ok {
-		t.Error("rsvp_count should be omitted when zero")
+	if _, ok := raw["rsvp_count"]; !ok {
+		t.Error("rsvp_count should be present even when zero")
+	}
+	if raw["rsvp_count"].(float64) != 0 {
+		t.Error("rsvp_count should be 0")
 	}
 }
 
