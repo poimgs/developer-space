@@ -17,3 +17,7 @@ frontend/dist/
 
 # OS
 .DS_Store
+
+# Test artifacts
+.playwright-mcp/
+*.png
