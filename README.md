@@ -123,6 +123,145 @@ developer-space/
 └── go.sum
 ```
 
+## Production Deployment
+
+### Architecture
+
+```
+Internet --> Caddy (:443 TLS, :80 redirect) --> frontend nginx (:80 internal)
+                                                    |           |
+                                                /api/*         /*
+                                                    v           v
+                                              Go API :8080   React SPA
+                                                    |
+                                              PostgreSQL :5432
+```
+
+Only ports 22, 80, and 443 are publicly accessible. Caddy handles TLS automatically via Let's Encrypt.
+
+### VPS Setup
+
+Requires a VPS running Ubuntu 22.04/24.04 with 1GB+ RAM and a domain with a DNS A record pointing to the VPS IP.
+
+#### 1. Install Docker
+
+```bash
+sudo apt-get update && sudo apt-get upgrade -y
+sudo apt-get install -y ca-certificates curl gnupg
+
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+  | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+```
+
+#### 2. Create a deploy user
+
+```bash
+sudo adduser --disabled-password --gecos "" deploy
+sudo usermod -aG docker deploy
+```
+
+#### 3. Configure firewall
+
+```bash
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow 22/tcp
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw enable
+```
+
+#### 4. Clone the repository
+
+```bash
+sudo -u deploy git clone https://github.com/poimgs/developer-space.git /home/deploy/developer-space
+```
+
+If the repo is private, add a [deploy key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/managing-deploy-keys) first and clone via SSH.
+
+#### 5. Configure environment
+
+```bash
+cd /home/deploy/developer-space
+sudo -u deploy cp .env.example .env
+sudo -u deploy nano .env
+```
+
+Set production values — generate secure passwords with:
+
+```bash
+openssl rand -base64 32   # for POSTGRES_PASSWORD
+openssl rand -base64 48   # for SESSION_SECRET
+```
+
+Key production settings:
+
+| Variable | Production value |
+|----------|-----------------|
+| `DOMAIN` | Your domain (e.g. `app.example.com`) |
+| `FRONTEND_URL` | `https://your-domain.example.com` |
+| `DATABASE_URL` | `postgres://coworkspace:<password>@postgres:5432/coworkspace?sslmode=disable` |
+| `LOG_LEVEL` | `info` |
+
+#### 6. Start the application
+
+```bash
+cd /home/deploy/developer-space
+sudo -u deploy docker compose -f docker-compose.prod.yml up -d
+```
+
+Caddy automatically provisions a TLS certificate on first startup.
+
+#### 7. Create an admin user
+
+```bash
+cd /home/deploy/developer-space
+docker compose -f docker-compose.prod.yml exec api /api seed-admin --email admin@example.com --name "Admin Name"
+```
+
+#### 8. Verify
+
+```bash
+curl https://your-domain.example.com/health
+# Should return: {"data":{"status":"ok"}}
+```
+
+### CI/CD with GitHub Actions
+
+Pushes to `main` auto-deploy to the VPS via SSH.
+
+#### Deploy SSH key
+
+```bash
+ssh-keygen -t ed25519 -f deploy_key -C "github-actions-deploy"
+```
+
+- Add the **public key** to `/home/deploy/.ssh/authorized_keys` on the VPS
+- Add the **private key** as a GitHub repository secret
+
+#### GitHub Secrets
+
+Add in repo Settings > Secrets and variables > Actions:
+
+| Secret | Value |
+|--------|-------|
+| `VPS_HOST` | VPS public IP address |
+| `VPS_USER` | `deploy` |
+| `VPS_SSH_KEY` | Contents of the deploy private key |
+| `DOMAIN` | Your production domain |
+
+### CI Testing
+
+Pull requests to `main` automatically run Go tests (with PostgreSQL) and frontend tests (Vitest).
+
 ## Specs
 
 Detailed feature specifications live in the [`specs/`](specs/) directory:
