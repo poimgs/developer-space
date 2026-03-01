@@ -13,7 +13,7 @@ func cancelEmailSubject(sessionTitle string) string {
 
 func cancelEmailBody(memberName string, session *model.SpaceSession) string {
 	return fmt.Sprintf(
-		"Hi %s,\n\nThe session \"%s\" scheduled for %s\n(%s – %s) has been canceled.\n\nYour RSVP has been noted. No further action is needed.\n\n— Co-Working Space\n",
+		"Hi %s,\n\nThe session \"%s\" scheduled for %s\n(%s – %s) has been canceled.\n\nYour RSVP has been noted. No further action is needed.\n\n— Developer Space\n",
 		memberName,
 		session.Title,
 		formatDateHuman(session.Date),
@@ -28,7 +28,7 @@ func rescheduleEmailSubject(sessionTitle string) string {
 
 func rescheduleEmailBody(memberName string, oldSession, newSession *model.SpaceSession) string {
 	return fmt.Sprintf(
-		"Hi %s,\n\nThe session \"%s\" has been rescheduled:\n\n  Previously: %s, %s – %s\n  Now:        %s, %s – %s\n\nYour RSVP is still active — no action needed unless the new time doesn't work for you.\n\n— Co-Working Space\n",
+		"Hi %s,\n\nThe session \"%s\" has been rescheduled:\n\n  Previously: %s, %s – %s\n  Now:        %s, %s – %s\n\nYour RSVP is still active — no action needed unless the new time doesn't work for you.\n\n— Developer Space\n",
 		memberName,
 		newSession.Title,
 		formatDateHuman(oldSession.Date), oldSession.StartTime, oldSession.EndTime,

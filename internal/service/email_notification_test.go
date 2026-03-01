@@ -95,7 +95,7 @@ func TestCancelEmailBody(t *testing.T) {
 		"February 14, 2025",
 		"14:00 – 18:00",
 		"has been canceled",
-		"— Co-Working Space",
+		"— Developer Space",
 	}
 
 	for _, part := range expectedParts {
@@ -135,7 +135,7 @@ func TestRescheduleEmailBody(t *testing.T) {
 		"Previously: February 14, 2025, 14:00 – 18:00",
 		"Now:        February 15, 2025, 15:00 – 19:00",
 		"RSVP is still active",
-		"— Co-Working Space",
+		"— Developer Space",
 	}
 
 	for _, part := range expectedParts {

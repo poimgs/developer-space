@@ -56,7 +56,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <h1 className="text-center text-2xl font-bold text-gray-900 dark:text-gray-100">
-          Co-Working Space
+          Developer Space
         </h1>
         <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
           Sign in with your email address
