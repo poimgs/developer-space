@@ -24,6 +24,7 @@ services:
     env_file: .env
     environment:
       DATABASE_URL: host=postgres port=5432 user=coworkspace password=${POSTGRES_PASSWORD} dbname=coworkspace sslmode=disable
+      FRONTEND_URL: https://${DOMAIN}
     depends_on:
       postgres:
         condition: service_healthy
