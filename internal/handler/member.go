@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
+	"github.com/developer-space/api/internal/middleware"
 	"github.com/developer-space/api/internal/model"
 	"github.com/developer-space/api/internal/response"
 	"github.com/developer-space/api/internal/service"
@@ -94,6 +95,14 @@ func (h *MemberHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.IsActive != nil && !*req.IsActive {
+		caller := middleware.MemberFromContext(r.Context())
+		if caller != nil && caller.ID == id {
+			response.Error(w, http.StatusForbidden, "Cannot deactivate your own account")
+			return
+		}
+	}
+
 	member, err := h.svc.Update(r.Context(), id, req)
 	if err != nil {
 		var ve *service.ValidationError
@@ -116,6 +125,12 @@ func (h *MemberHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		response.Error(w, http.StatusBadRequest, "Invalid member ID")
+		return
+	}
+
+	caller := middleware.MemberFromContext(r.Context())
+	if caller != nil && caller.ID == id {
+		response.Error(w, http.StatusForbidden, "Cannot delete your own account")
 		return
 	}
 

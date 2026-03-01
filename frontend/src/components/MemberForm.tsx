@@ -6,6 +6,9 @@ interface MemberFormProps {
   onSubmit: (data: CreateMemberRequest | UpdateMemberRequest) => Promise<void>;
   onCancel: () => void;
   loading?: boolean;
+  onToggleActive?: () => void;
+  onDelete?: () => void;
+  isSelf?: boolean;
 }
 
 interface FormErrors {
@@ -13,7 +16,7 @@ interface FormErrors {
   name?: string;
 }
 
-export default function MemberForm({ member, onSubmit, onCancel, loading }: MemberFormProps) {
+export default function MemberForm({ member, onSubmit, onCancel, loading, onToggleActive, onDelete, isSelf }: MemberFormProps) {
   const isEdit = !!member;
 
   const [email, setEmail] = useState(member?.email ?? '');
@@ -133,6 +136,29 @@ export default function MemberForm({ member, onSubmit, onCancel, loading }: Memb
           </label>
         )}
       </div>
+
+      {isEdit && !isSelf && (onToggleActive || onDelete) && (
+        <div className="flex gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
+          {onToggleActive && (
+            <button
+              type="button"
+              onClick={onToggleActive}
+              className="rounded-md border border-amber-300 px-4 py-2 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-50 dark:border-amber-600 dark:text-amber-400 dark:hover:bg-amber-900/20"
+            >
+              {member?.is_active ? 'Deactivate' : 'Activate'}
+            </button>
+          )}
+          {onDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 dark:border-red-600 dark:text-red-400 dark:hover:bg-red-900/20"
+            >
+              Delete
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="flex justify-end gap-3 pt-2">
         <button

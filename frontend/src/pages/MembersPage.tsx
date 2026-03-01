@@ -4,6 +4,7 @@ import { api, ApiError } from '../api/client';
 import ConfirmModal from '../components/ConfirmModal';
 import EmptyState from '../components/EmptyState';
 import MemberForm from '../components/MemberForm';
+import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import type {
   APIResponse,
@@ -16,6 +17,7 @@ type ActiveFilter = 'true' | 'false' | 'all';
 
 export default function MembersPage() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const { addToast } = useToast();
 
   const [activeFilter, setActiveFilter] = useState<ActiveFilter>('true');
@@ -146,6 +148,7 @@ export default function MembersPage() {
           <MemberForm
             member={editingMember ?? undefined}
             loading={createMutation.isPending || updateMutation.isPending}
+            isSelf={!!editingMember && user?.id === editingMember.id}
             onCancel={() => {
               setShowForm(false);
               setEditingMember(null);
@@ -160,6 +163,25 @@ export default function MembersPage() {
                 await createMutation.mutateAsync(data as CreateMemberRequest);
               }
             }}
+            onToggleActive={
+              editingMember
+                ? () => {
+                    toggleActiveMutation.mutate({
+                      id: editingMember.id,
+                      is_active: !editingMember.is_active,
+                    });
+                    setEditingMember(null);
+                  }
+                : undefined
+            }
+            onDelete={
+              editingMember
+                ? () => {
+                    setDeletingMember(editingMember);
+                    setEditingMember(null);
+                  }
+                : undefined
+            }
           />
         </div>
       )}
@@ -224,13 +246,7 @@ export default function MembersPage() {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <button
-                        onClick={() =>
-                          toggleActiveMutation.mutate({
-                            id: m.id,
-                            is_active: !m.is_active,
-                          })
-                        }
+                      <span
                         className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
                           m.is_active
                             ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
@@ -238,10 +254,33 @@ export default function MembersPage() {
                         }`}
                       >
                         {m.is_active ? 'Active' : 'Inactive'}
-                      </button>
+                      </span>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
+                        {user?.id !== m.id && (
+                          <button
+                            onClick={() =>
+                              toggleActiveMutation.mutate({
+                                id: m.id,
+                                is_active: !m.is_active,
+                              })
+                            }
+                            className="text-gray-500 hover:text-amber-600 dark:text-gray-400 dark:hover:text-amber-400"
+                            aria-label={m.is_active ? `Deactivate ${m.name}` : `Activate ${m.name}`}
+                            title={m.is_active ? 'Deactivate' : 'Activate'}
+                          >
+                            {m.is_active ? (
+                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                              </svg>
+                            ) : (
+                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            )}
+                          </button>
+                        )}
                         <button
                           onClick={() => {
                             setShowForm(false);
@@ -254,15 +293,17 @@ export default function MembersPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
                           </svg>
                         </button>
-                        <button
-                          onClick={() => setDeletingMember(m)}
-                          className="text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
-                          aria-label={`Delete ${m.name}`}
-                        >
-                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                          </svg>
-                        </button>
+                        {user?.id !== m.id && (
+                          <button
+                            onClick={() => setDeletingMember(m)}
+                            className="text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+                            aria-label={`Delete ${m.name}`}
+                          >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                            </svg>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -284,6 +325,29 @@ export default function MembersPage() {
                     <p className="text-sm text-gray-500 dark:text-gray-400">{m.email}</p>
                   </div>
                   <div className="flex gap-2">
+                    {user?.id !== m.id && (
+                      <button
+                        onClick={() =>
+                          toggleActiveMutation.mutate({
+                            id: m.id,
+                            is_active: !m.is_active,
+                          })
+                        }
+                        className="text-gray-500 hover:text-amber-600 dark:text-gray-400 dark:hover:text-amber-400"
+                        aria-label={m.is_active ? `Deactivate ${m.name}` : `Activate ${m.name}`}
+                        title={m.is_active ? 'Deactivate' : 'Activate'}
+                      >
+                        {m.is_active ? (
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                          </svg>
+                        ) : (
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        )}
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         setShowForm(false);
@@ -296,15 +360,17 @@ export default function MembersPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
                       </svg>
                     </button>
-                    <button
-                      onClick={() => setDeletingMember(m)}
-                      className="text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
-                      aria-label={`Delete ${m.name}`}
-                    >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                      </svg>
-                    </button>
+                    {user?.id !== m.id && (
+                      <button
+                        onClick={() => setDeletingMember(m)}
+                        className="text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+                        aria-label={`Delete ${m.name}`}
+                      >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
+                      </button>
+                    )}
                   </div>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2">
@@ -318,13 +384,7 @@ export default function MembersPage() {
                       Admin
                     </span>
                   )}
-                  <button
-                    onClick={() =>
-                      toggleActiveMutation.mutate({
-                        id: m.id,
-                        is_active: !m.is_active,
-                      })
-                    }
+                  <span
                     className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
                       m.is_active
                         ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
@@ -332,7 +392,7 @@ export default function MembersPage() {
                     }`}
                   >
                     {m.is_active ? 'Active' : 'Inactive'}
-                  </button>
+                  </span>
                 </div>
               </div>
             ))}
