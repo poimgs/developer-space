@@ -33,7 +33,22 @@ func TestPgxURL(t *testing.T) {
 		{
 			name:     "handles empty string",
 			input:    "",
-			expected: "",
+			expected: "pgx5://localhost:5432",
+		},
+		{
+			name:     "converts keyword/value format",
+			input:    "host=postgres port=5432 user=coworkspace password=secret dbname=coworkspace sslmode=disable",
+			expected: "pgx5://coworkspace:secret@postgres:5432/coworkspace?sslmode=disable",
+		},
+		{
+			name:     "keyword/value with special chars in password",
+			input:    "host=postgres port=5432 user=coworkspace password=PwZ2+xv7/b5k= dbname=coworkspace sslmode=disable",
+			expected: "pgx5://coworkspace:PwZ2+xv7%2Fb5k=@postgres:5432/coworkspace?sslmode=disable",
+		},
+		{
+			name:     "keyword/value with defaults",
+			input:    "user=myuser password=mypass dbname=mydb",
+			expected: "pgx5://myuser:mypass@localhost:5432/mydb",
 		},
 	}
 

@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/url"
+	"strings"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/pgx/v5"
@@ -44,13 +46,57 @@ func MigrateDown(databaseURL string, migrationsPath string, steps int) error {
 	return nil
 }
 
-// pgxURL converts a postgres:// URL to the pgx5:// scheme that golang-migrate expects.
+// pgxURL converts a database connection string to the pgx5:// URL that golang-migrate expects.
+// Accepts both URL format (postgres://...) and keyword/value format (host=... port=...).
 func pgxURL(databaseURL string) string {
-	if len(databaseURL) > 11 && databaseURL[:11] == "postgres://" {
-		return "pgx5://" + databaseURL[11:]
+	if strings.HasPrefix(databaseURL, "postgres://") {
+		return "pgx5://" + databaseURL[len("postgres://"):]
 	}
-	if len(databaseURL) > 13 && databaseURL[:13] == "postgresql://" {
-		return "pgx5://" + databaseURL[13:]
+	if strings.HasPrefix(databaseURL, "postgresql://") {
+		return "pgx5://" + databaseURL[len("postgresql://"):]
 	}
-	return databaseURL
+	// Already a URL with a scheme (e.g. pgx5://, mysql://) — pass through
+	if strings.Contains(databaseURL, "://") {
+		return databaseURL
+	}
+
+	// Parse keyword/value format (e.g. "host=localhost port=5432 user=x password=y dbname=z sslmode=disable")
+	params := map[string]string{}
+	for _, part := range strings.Fields(databaseURL) {
+		k, v, ok := strings.Cut(part, "=")
+		if ok {
+			params[k] = v
+		}
+	}
+
+	host := params["host"]
+	if host == "" {
+		host = "localhost"
+	}
+	port := params["port"]
+	if port == "" {
+		port = "5432"
+	}
+	dbname := params["dbname"]
+	if dbname == "" {
+		dbname = params["user"]
+	}
+
+	u := &url.URL{
+		Scheme: "pgx5",
+		Host:   host + ":" + port,
+		Path:   dbname,
+	}
+	if user, ok := params["user"]; ok {
+		if pass, ok := params["password"]; ok {
+			u.User = url.UserPassword(user, pass)
+		} else {
+			u.User = url.User(user)
+		}
+	}
+	if sslmode, ok := params["sslmode"]; ok {
+		u.RawQuery = "sslmode=" + sslmode
+	}
+
+	return u.String()
 }
