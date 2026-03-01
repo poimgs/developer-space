@@ -7,7 +7,7 @@ services:
       - "${PORT:-8080}:8080"
     env_file: .env
     environment:
-      DATABASE_URL: postgres://coworkspace:${POSTGRES_PASSWORD}@postgres:5432/coworkspace?sslmode=disable
+      DATABASE_URL: host=postgres port=5432 user=coworkspace password=${POSTGRES_PASSWORD} dbname=coworkspace sslmode=disable
     depends_on:
       postgres:
         condition: service_healthy
