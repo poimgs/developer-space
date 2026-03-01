@@ -38,7 +38,8 @@ export default function LoginPage() {
           <div className="mb-4 text-4xl">&#9993;</div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Check your email</h1>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            We sent a magic link to <strong>{email}</strong>. Click the link to sign in.
+            If <strong>{email}</strong> has been registered, we sent a magic link.
+            If you don&apos;t receive one, ask your admin for access.
           </p>
           <button
             onClick={() => { setSent(false); setEmail(''); }}
