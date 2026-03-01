@@ -30,7 +30,7 @@ export default function Layout() {
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
           <div className="flex items-center gap-4">
             <Link to="/" className="text-lg font-bold text-gray-900 dark:text-gray-100">
-              CoWork
+              Developer Space
             </Link>
             <div className="hidden items-center gap-1 md:flex">
               <NavLink to="/">Sessions</NavLink>
