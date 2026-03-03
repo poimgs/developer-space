@@ -1,8 +1,7 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
-import type { SpaceSession } from '../../types';
+import type { RSVPWithMember, SpaceSession } from '../../types';
 import ConfirmModal from '../ConfirmModal';
 import SessionCard from '../SessionCard';
 import Toast from '../Toast';
@@ -60,7 +59,7 @@ function getAllClasses(container: HTMLElement): string {
 describe('Visual Refresh — Warm Palette', () => {
   describe('SessionCard uses amber accent and stone neutrals', () => {
     it('uses amber accent for RSVP button', () => {
-      const { container } = render(
+      render(
         <MemoryRouter>
           <SessionCard
             session={makeSession()}
@@ -124,10 +123,10 @@ describe('Visual Refresh — Warm Palette', () => {
     });
 
     it('uses amber for attendee pills', () => {
-      const attendees = [
-        { id: 'r1', session_id: 's1', member_id: 'm1', created_at: '', member: { id: 'm1', name: 'Alice', email: 'a@b.com' } },
+      const attendees: RSVPWithMember[] = [
+        { id: 'r1', session_id: 's1', member: { id: 'm1', name: 'Alice', telegram_handle: null }, created_at: '' },
       ];
-      const { container } = render(
+      render(
         <MemoryRouter>
           <SessionCard
             session={makeSession()}
@@ -158,8 +157,8 @@ describe('Visual Refresh — Warm Palette', () => {
     });
 
     it('has no indigo classes anywhere in the card', () => {
-      const attendees = [
-        { id: 'r1', session_id: 's1', member_id: 'm1', created_at: '', member: { id: 'm1', name: 'Alice', email: 'a@b.com' } },
+      const attendees: RSVPWithMember[] = [
+        { id: 'r1', session_id: 's1', member: { id: 'm1', name: 'Alice', telegram_handle: null }, created_at: '' },
       ];
       const { container } = render(
         <MemoryRouter>

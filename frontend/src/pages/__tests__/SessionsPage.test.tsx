@@ -65,16 +65,6 @@ function makeSession(overrides: Partial<SpaceSession> = {}): SpaceSession {
   };
 }
 
-function makeRsvp(overrides: Partial<RSVPWithMember> = {}): RSVPWithMember {
-  return {
-    id: 'rsvp-1',
-    session_id: 'session-1',
-    member: { id: 'member-1', name: 'Alice', telegram_handle: null },
-    created_at: '2026-03-01T00:00:00Z',
-    ...overrides,
-  };
-}
-
 function createQueryClient() {
   return new QueryClient({
     defaultOptions: {
