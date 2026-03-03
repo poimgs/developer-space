@@ -20,6 +20,8 @@ function makeSession(overrides: Partial<SpaceSession> = {}): SpaceSession {
     end_time: '18:00',
     capacity: 8,
     status: 'scheduled',
+    image_url: null,
+    location: null,
     series_id: null,
     created_by: 'admin-1',
     created_at: '2026-03-01T00:00:00Z',
@@ -47,7 +49,7 @@ describe('SessionCard', () => {
 
   it('renders spot count', () => {
     renderCard(makeSession({ rsvp_count: 3, capacity: 8 }));
-    expect(screen.getByText('3/8')).toBeInTheDocument();
+    expect(screen.getByText('3/8 spots')).toBeInTheDocument();
   });
 
   it('renders status badge', () => {
@@ -114,6 +116,71 @@ describe('SessionCard', () => {
   it('shows Cancel RSVP even when full if user is RSVPed', () => {
     renderCard(makeSession({ rsvp_count: 8, capacity: 8, user_rsvped: true }));
     expect(screen.getByRole('button', { name: 'Cancel RSVP' })).toBeInTheDocument();
+  });
+
+  it('displays location when provided', () => {
+    renderCard(makeSession({ location: '123 Main St' }));
+    expect(screen.getByText('123 Main St')).toBeInTheDocument();
+  });
+
+  it('does not display location when null', () => {
+    renderCard(makeSession({ location: null }));
+    expect(screen.queryByText('123 Main St')).toBeNull();
+  });
+
+  it('displays image in hero variant when image_url is set', () => {
+    render(
+      <MemoryRouter>
+        <SessionCard
+          session={makeSession({ image_url: '/uploads/sessions/test.jpg' })}
+          onRSVP={vi.fn()}
+          onCancelRSVP={vi.fn()}
+          variant="hero"
+        />
+      </MemoryRouter>,
+    );
+    const img = screen.getByAltText('Friday Coworking');
+    expect(img).toBeInTheDocument();
+    expect(img).toHaveAttribute('src', '/uploads/sessions/test.jpg');
+  });
+
+  it('does not display image in default variant', () => {
+    renderCard(makeSession({ image_url: '/uploads/sessions/test.jpg' }));
+    expect(screen.queryByAltText('Friday Coworking')).toBeNull();
+  });
+
+  it('displays description in hero variant', () => {
+    render(
+      <MemoryRouter>
+        <SessionCard
+          session={makeSession({ description: 'A great coworking session' })}
+          onRSVP={vi.fn()}
+          onCancelRSVP={vi.fn()}
+          variant="hero"
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('A great coworking session')).toBeInTheDocument();
+  });
+
+  it('does not display description in default variant', () => {
+    renderCard(makeSession({ description: 'A great coworking session' }));
+    expect(screen.queryByText('A great coworking session')).toBeNull();
+  });
+
+  it('hero variant uses larger title', () => {
+    render(
+      <MemoryRouter>
+        <SessionCard
+          session={makeSession()}
+          onRSVP={vi.fn()}
+          onCancelRSVP={vi.fn()}
+          variant="hero"
+        />
+      </MemoryRouter>,
+    );
+    const title = screen.getByText('Friday Coworking');
+    expect(title.className).toContain('text-lg');
   });
 });
 

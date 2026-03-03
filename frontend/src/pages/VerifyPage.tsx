@@ -34,11 +34,11 @@ export default function VerifyPage() {
     return (
       <div className="flex min-h-screen items-center justify-center px-4">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Verification failed</h1>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{error}</p>
+          <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100">Verification failed</h1>
+          <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">{error}</p>
           <a
             href="/login"
-            className="mt-4 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+            className="mt-4 inline-block text-sm font-medium text-amber-600 hover:text-amber-500 dark:text-amber-400"
           >
             Back to login
           </a>
@@ -49,7 +49,7 @@ export default function VerifyPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-600 border-t-transparent" />
     </div>
   );
 }

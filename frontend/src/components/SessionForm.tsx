@@ -25,6 +25,7 @@ export default function SessionForm({ session, onSubmit, loading }: SessionFormP
   const [startTime, setStartTime] = useState(session?.start_time ?? '');
   const [endTime, setEndTime] = useState(session?.end_time ?? '');
   const [capacity, setCapacity] = useState(session?.capacity?.toString() ?? '');
+  const [location, setLocation] = useState(session?.location ?? '');
   const [repeatMode, setRepeatMode] = useState<'none' | 'weekly' | 'forever'>('none');
   const [repeatCount, setRepeatCount] = useState(1);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -64,6 +65,7 @@ export default function SessionForm({ session, onSubmit, loading }: SessionFormP
       if (endTime !== session.end_time) data.end_time = endTime;
       const cap = parseInt(capacity, 10);
       if (cap !== session.capacity) data.capacity = cap;
+      if ((location || '') !== (session.location || '')) data.location = location.trim() || null;
       await onSubmit(data);
     } else {
       const data: CreateSessionRequest = {
@@ -74,6 +76,7 @@ export default function SessionForm({ session, onSubmit, loading }: SessionFormP
         capacity: parseInt(capacity, 10),
       };
       if (description.trim()) data.description = description.trim();
+      if (location.trim()) data.location = location.trim();
       if (repeatMode === 'weekly') data.repeat_weekly = repeatCount;
       if (repeatMode === 'forever') data.repeat_forever = true;
       await onSubmit(data);
@@ -83,7 +86,7 @@ export default function SessionForm({ session, onSubmit, loading }: SessionFormP
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label htmlFor="title" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
           Title <span className="text-red-500">*</span>
         </label>
         <input
@@ -91,13 +94,13 @@ export default function SessionForm({ session, onSubmit, loading }: SessionFormP
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+          className="mt-1 block w-full rounded-md border border-stone-300 px-3 py-2 text-stone-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none dark:border-stone-600 dark:bg-stone-700 dark:text-stone-100"
         />
         {errors.title && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.title}</p>}
       </div>
 
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label htmlFor="description" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
           Description
         </label>
         <textarea
@@ -105,12 +108,32 @@ export default function SessionForm({ session, onSubmit, loading }: SessionFormP
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+          className="mt-1 block w-full rounded-md border border-stone-300 px-3 py-2 text-stone-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none dark:border-stone-600 dark:bg-stone-700 dark:text-stone-100"
         />
       </div>
 
       <div>
-        <label htmlFor="date" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label htmlFor="location" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
+          Location
+        </label>
+        <div className="relative mt-1">
+          <svg className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400 dark:text-stone-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+          </svg>
+          <input
+            id="location"
+            type="text"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder="e.g. 123 Main St, Suite 4B"
+            className="block w-full rounded-md border border-stone-300 pl-9 pr-3 py-2 text-stone-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none dark:border-stone-600 dark:bg-stone-700 dark:text-stone-100"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label htmlFor="date" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
           Date <span className="text-red-500">*</span>
         </label>
         <input
@@ -118,14 +141,14 @@ export default function SessionForm({ session, onSubmit, loading }: SessionFormP
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+          className="mt-1 block w-full rounded-md border border-stone-300 px-3 py-2 text-stone-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none dark:border-stone-600 dark:bg-stone-700 dark:text-stone-100"
         />
         {errors.date && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.date}</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="start_time" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label htmlFor="start_time" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
             Start time <span className="text-red-500">*</span>
           </label>
           <input
@@ -133,12 +156,12 @@ export default function SessionForm({ session, onSubmit, loading }: SessionFormP
             type="time"
             value={startTime}
             onChange={(e) => setStartTime(e.target.value)}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+            className="mt-1 block w-full rounded-md border border-stone-300 px-3 py-2 text-stone-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none dark:border-stone-600 dark:bg-stone-700 dark:text-stone-100"
           />
           {errors.start_time && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.start_time}</p>}
         </div>
         <div>
-          <label htmlFor="end_time" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label htmlFor="end_time" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
             End time <span className="text-red-500">*</span>
           </label>
           <input
@@ -146,14 +169,14 @@ export default function SessionForm({ session, onSubmit, loading }: SessionFormP
             type="time"
             value={endTime}
             onChange={(e) => setEndTime(e.target.value)}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+            className="mt-1 block w-full rounded-md border border-stone-300 px-3 py-2 text-stone-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none dark:border-stone-600 dark:bg-stone-700 dark:text-stone-100"
           />
           {errors.end_time && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.end_time}</p>}
         </div>
       </div>
 
       <div>
-        <label htmlFor="capacity" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label htmlFor="capacity" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
           Capacity <span className="text-red-500">*</span>
         </label>
         <input
@@ -162,14 +185,14 @@ export default function SessionForm({ session, onSubmit, loading }: SessionFormP
           min="1"
           value={capacity}
           onChange={(e) => setCapacity(e.target.value)}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+          className="mt-1 block w-full rounded-md border border-stone-300 px-3 py-2 text-stone-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none dark:border-stone-600 dark:bg-stone-700 dark:text-stone-100"
         />
         {errors.capacity && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.capacity}</p>}
       </div>
 
       {!isEdit && (
         <div className="space-y-2">
-          <span className="block text-sm font-medium text-gray-700 dark:text-gray-300">Repeat</span>
+          <span className="block text-sm font-medium text-stone-700 dark:text-stone-300">Repeat</span>
           <div className="space-y-1">
             <label className="flex items-center gap-2">
               <input
@@ -177,9 +200,9 @@ export default function SessionForm({ session, onSubmit, loading }: SessionFormP
                 name="repeat"
                 checked={repeatMode === 'none'}
                 onChange={() => setRepeatMode('none')}
-                className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                className="h-4 w-4 border-stone-300 text-amber-600 focus:ring-amber-500"
               />
-              <span className="text-sm text-gray-700 dark:text-gray-300">No repeat</span>
+              <span className="text-sm text-stone-700 dark:text-stone-300">No repeat</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -187,9 +210,9 @@ export default function SessionForm({ session, onSubmit, loading }: SessionFormP
                 name="repeat"
                 checked={repeatMode === 'weekly'}
                 onChange={() => setRepeatMode('weekly')}
-                className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                className="h-4 w-4 border-stone-300 text-amber-600 focus:ring-amber-500"
               />
-              <span className="text-sm text-gray-700 dark:text-gray-300">Repeat weekly for</span>
+              <span className="text-sm text-stone-700 dark:text-stone-300">Repeat weekly for</span>
             </label>
             {repeatMode === 'weekly' && (
               <div className="ml-6 flex items-center gap-2">
@@ -199,9 +222,9 @@ export default function SessionForm({ session, onSubmit, loading }: SessionFormP
                   max="12"
                   value={repeatCount}
                   onChange={(e) => setRepeatCount(parseInt(e.target.value, 10) || 1)}
-                  className="w-16 rounded-md border border-gray-300 px-2 py-1 text-sm text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                  className="w-16 rounded-md border border-stone-300 px-2 py-1 text-sm text-stone-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none dark:border-stone-600 dark:bg-stone-700 dark:text-stone-100"
                 />
-                <span className="text-sm text-gray-600 dark:text-gray-400">weeks</span>
+                <span className="text-sm text-stone-600 dark:text-stone-400">weeks</span>
                 {errors.repeat_weekly && <p className="text-xs text-red-600 dark:text-red-400">{errors.repeat_weekly}</p>}
               </div>
             )}
@@ -211,9 +234,9 @@ export default function SessionForm({ session, onSubmit, loading }: SessionFormP
                 name="repeat"
                 checked={repeatMode === 'forever'}
                 onChange={() => setRepeatMode('forever')}
-                className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                className="h-4 w-4 border-stone-300 text-amber-600 focus:ring-amber-500"
               />
-              <span className="text-sm text-gray-700 dark:text-gray-300">Repeat forever</span>
+              <span className="text-sm text-stone-700 dark:text-stone-300">Repeat forever</span>
             </label>
           </div>
         </div>
@@ -223,7 +246,7 @@ export default function SessionForm({ session, onSubmit, loading }: SessionFormP
         <button
           type="submit"
           disabled={loading}
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? 'Saving...' : isEdit ? 'Save Changes' : 'Create Session'}
         </button>

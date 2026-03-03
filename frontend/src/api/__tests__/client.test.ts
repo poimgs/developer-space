@@ -103,4 +103,75 @@ describe('API client', () => {
       expect((err as ApiError).message).toBe('Internal Server Error');
     }
   });
+
+  describe('getPublicProfile', () => {
+    it('fetches profile by ID', async () => {
+      const profile = {
+        id: 'abc-123',
+        name: 'Jane Doe',
+        telegram_handle: 'janedoe',
+        bio: 'Developer',
+        skills: ['go', 'react'],
+        linkedin_url: 'https://linkedin.com/in/jane',
+        instagram_handle: 'jane',
+        github_username: 'janedoe',
+      };
+      mockFetch(200, { data: profile });
+
+      const result = await api.getPublicProfile('abc-123');
+      expect(result).toEqual({ data: profile });
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        '/api/profiles/abc-123',
+        expect.objectContaining({
+          credentials: 'include',
+          headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
+        }),
+      );
+    });
+
+    it('throws ApiError when profile not found', async () => {
+      mockFetch(404, { error: 'not found' }, false);
+      await expect(api.getPublicProfile('nonexistent')).rejects.toThrow(ApiError);
+    });
+  });
+
+  describe('uploadSessionImage', () => {
+    it('sends multipart form with image file', async () => {
+      const responseBody = { data: { image_url: '/uploads/sessions/abc-123-1234567890.jpg' } };
+      (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(responseBody),
+      });
+
+      const file = new File(['fake-image-data'], 'photo.jpg', { type: 'image/jpeg' });
+      const result = await api.uploadSessionImage('abc-123', file);
+
+      expect(result).toEqual(responseBody);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        '/api/sessions/abc-123/image',
+        expect.objectContaining({
+          method: 'POST',
+          credentials: 'include',
+        }),
+      );
+
+      // Verify FormData was sent (not JSON Content-Type)
+      const callArgs = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+      expect(callArgs[1].body).toBeInstanceOf(FormData);
+      expect(callArgs[1].headers).toBeUndefined();
+    });
+
+    it('throws ApiError on upload failure', async () => {
+      (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        ok: false,
+        status: 413,
+        statusText: 'Payload Too Large',
+        json: () => Promise.resolve({ error: 'file too large' }),
+      });
+
+      const file = new File(['data'], 'big.jpg', { type: 'image/jpeg' });
+      await expect(api.uploadSessionImage('abc-123', file)).rejects.toThrow(ApiError);
+    });
+  });
 });

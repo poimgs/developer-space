@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -200,26 +201,89 @@ func (s *AuthService) ClearSessionCookie() *http.Cookie {
 	}
 }
 
-// UpdateProfile updates only name and telegram_handle for the current user.
-func (s *AuthService) UpdateProfile(ctx context.Context, memberID uuid.UUID, name *string, telegramHandle *string) (*model.Member, error) {
+// ProfileUpdateInput contains the fields a member can update on their own profile.
+type ProfileUpdateInput struct {
+	Name            *string  `json:"name"`
+	TelegramHandle  *string  `json:"telegram_handle"`
+	Bio             *string  `json:"bio"`
+	Skills          []string `json:"skills"`
+	LinkedinURL     *string  `json:"linkedin_url"`
+	InstagramHandle *string  `json:"instagram_handle"`
+	GithubUsername  *string  `json:"github_username"`
+}
+
+// UpdateProfile updates the current user's profile fields.
+func (s *AuthService) UpdateProfile(ctx context.Context, memberID uuid.UUID, input ProfileUpdateInput) (*model.Member, error) {
 	// Validate name if provided
-	if name != nil {
-		n := strings.TrimSpace(*name)
+	if input.Name != nil {
+		n := strings.TrimSpace(*input.Name)
 		if n == "" {
 			return nil, &ValidationError{Details: map[string]string{"name": "required"}}
 		}
-		name = &n
+		input.Name = &n
 	}
 
 	// Strip @ from telegram handle
-	if telegramHandle != nil {
-		h := strings.TrimPrefix(strings.TrimSpace(*telegramHandle), "@")
-		telegramHandle = &h
+	if input.TelegramHandle != nil {
+		h := strings.TrimPrefix(strings.TrimSpace(*input.TelegramHandle), "@")
+		input.TelegramHandle = &h
+	}
+
+	// Validate bio length
+	if input.Bio != nil {
+		b := strings.TrimSpace(*input.Bio)
+		if len(b) > 500 {
+			return nil, &ValidationError{Details: map[string]string{"bio": "must be 500 characters or fewer"}}
+		}
+		input.Bio = &b
+	}
+
+	// Validate and normalize skills
+	if input.Skills != nil {
+		if len(input.Skills) > 10 {
+			return nil, &ValidationError{Details: map[string]string{"skills": "maximum 10 tags allowed"}}
+		}
+		normalized := make([]string, 0, len(input.Skills))
+		for _, skill := range input.Skills {
+			s := strings.ToLower(strings.TrimSpace(skill))
+			if s != "" {
+				normalized = append(normalized, s)
+			}
+		}
+		input.Skills = normalized
+	}
+
+	// Validate linkedin_url
+	if input.LinkedinURL != nil {
+		u := strings.TrimSpace(*input.LinkedinURL)
+		if u != "" {
+			if _, err := url.ParseRequestURI(u); err != nil || (!strings.HasPrefix(u, "http://") && !strings.HasPrefix(u, "https://")) {
+				return nil, &ValidationError{Details: map[string]string{"linkedin_url": "must be a valid URL"}}
+			}
+		}
+		input.LinkedinURL = &u
+	}
+
+	// Strip @ from instagram handle
+	if input.InstagramHandle != nil {
+		h := strings.TrimPrefix(strings.TrimSpace(*input.InstagramHandle), "@")
+		input.InstagramHandle = &h
+	}
+
+	// Strip @ from github username
+	if input.GithubUsername != nil {
+		h := strings.TrimPrefix(strings.TrimSpace(*input.GithubUsername), "@")
+		input.GithubUsername = &h
 	}
 
 	req := model.UpdateMemberRequest{
-		Name:           name,
-		TelegramHandle: telegramHandle,
+		Name:            input.Name,
+		TelegramHandle:  input.TelegramHandle,
+		Bio:             input.Bio,
+		Skills:          input.Skills,
+		LinkedinURL:     input.LinkedinURL,
+		InstagramHandle: input.InstagramHandle,
+		GithubUsername:  input.GithubUsername,
 	}
 
 	member, err := s.memberRepo.Update(ctx, memberID, req)
@@ -230,6 +294,18 @@ func (s *AuthService) UpdateProfile(ctx context.Context, memberID uuid.UUID, nam
 		return nil, ErrNotFound
 	}
 
+	return member, nil
+}
+
+// GetPublicProfile returns publicly visible profile information for a member.
+func (s *AuthService) GetPublicProfile(ctx context.Context, memberID uuid.UUID) (*model.PublicMember, error) {
+	member, err := s.memberRepo.GetByIDPublic(ctx, memberID)
+	if err != nil {
+		return nil, fmt.Errorf("getting public profile: %w", err)
+	}
+	if member == nil {
+		return nil, ErrNotFound
+	}
 	return member, nil
 }
 

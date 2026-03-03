@@ -99,6 +99,121 @@ func TestCreateMemberRequestJSON(t *testing.T) {
 	}
 }
 
+func TestMemberProfileFieldsSerialization(t *testing.T) {
+	bio := "Full-stack developer passionate about Go"
+	linkedin := "https://linkedin.com/in/testuser"
+	instagram := "testuser"
+	github := "testuser"
+	now := time.Now().Truncate(time.Millisecond)
+
+	m := Member{
+		ID:              uuid.New(),
+		Email:           "test@example.com",
+		Name:            "Test User",
+		IsActive:        true,
+		Bio:             &bio,
+		Skills:          []string{"go", "react", "postgresql"},
+		LinkedinURL:     &linkedin,
+		InstagramHandle: &instagram,
+		GithubUsername:  &github,
+		CreatedAt:       now,
+		UpdatedAt:       now,
+	}
+
+	data, err := json.Marshal(m)
+	if err != nil {
+		t.Fatalf("failed to marshal member: %v", err)
+	}
+
+	var decoded Member
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		t.Fatalf("failed to unmarshal member: %v", err)
+	}
+
+	if decoded.Bio == nil || *decoded.Bio != bio {
+		t.Errorf("Bio = %v, want %q", decoded.Bio, bio)
+	}
+	if len(decoded.Skills) != 3 {
+		t.Fatalf("Skills length = %d, want 3", len(decoded.Skills))
+	}
+	if decoded.Skills[0] != "go" || decoded.Skills[1] != "react" || decoded.Skills[2] != "postgresql" {
+		t.Errorf("Skills = %v, want [go react postgresql]", decoded.Skills)
+	}
+	if decoded.LinkedinURL == nil || *decoded.LinkedinURL != linkedin {
+		t.Errorf("LinkedinURL = %v, want %q", decoded.LinkedinURL, linkedin)
+	}
+	if decoded.InstagramHandle == nil || *decoded.InstagramHandle != instagram {
+		t.Errorf("InstagramHandle = %v, want %q", decoded.InstagramHandle, instagram)
+	}
+	if decoded.GithubUsername == nil || *decoded.GithubUsername != github {
+		t.Errorf("GithubUsername = %v, want %q", decoded.GithubUsername, github)
+	}
+}
+
+func TestMemberProfileFieldsNullWhenUnset(t *testing.T) {
+	m := Member{
+		ID:       uuid.New(),
+		Email:    "test@example.com",
+		Name:     "Test User",
+		IsActive: true,
+	}
+
+	data, err := json.Marshal(m)
+	if err != nil {
+		t.Fatalf("failed to marshal: %v", err)
+	}
+
+	var raw map[string]interface{}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		t.Fatalf("failed to unmarshal: %v", err)
+	}
+
+	if raw["bio"] != nil {
+		t.Errorf("expected bio to be null, got %v", raw["bio"])
+	}
+	if raw["linkedin_url"] != nil {
+		t.Errorf("expected linkedin_url to be null, got %v", raw["linkedin_url"])
+	}
+	if raw["instagram_handle"] != nil {
+		t.Errorf("expected instagram_handle to be null, got %v", raw["instagram_handle"])
+	}
+	if raw["github_username"] != nil {
+		t.Errorf("expected github_username to be null, got %v", raw["github_username"])
+	}
+	// Skills should be null when nil (not set), matching DB default behavior
+	if raw["skills"] != nil {
+		t.Errorf("expected skills to be null when nil, got %v", raw["skills"])
+	}
+}
+
+func TestMemberEmptySkillsSerialization(t *testing.T) {
+	m := Member{
+		ID:       uuid.New(),
+		Email:    "test@example.com",
+		Name:     "Test User",
+		IsActive: true,
+		Skills:   []string{},
+	}
+
+	data, err := json.Marshal(m)
+	if err != nil {
+		t.Fatalf("failed to marshal: %v", err)
+	}
+
+	var raw map[string]interface{}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		t.Fatalf("failed to unmarshal: %v", err)
+	}
+
+	skills, ok := raw["skills"].([]interface{})
+	if !ok {
+		t.Fatalf("expected skills to be an array, got %T", raw["skills"])
+	}
+	if len(skills) != 0 {
+		t.Errorf("expected empty skills array, got %v", skills)
+	}
+}
+
 func TestUpdateMemberRequestPartialJSON(t *testing.T) {
 	body := `{"name":"New Name"}`
 

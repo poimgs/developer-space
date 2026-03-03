@@ -14,6 +14,8 @@ function makeSession(overrides: Partial<SpaceSession> = {}): SpaceSession {
     end_time: '18:00',
     capacity: 8,
     status: 'scheduled',
+    image_url: null,
+    location: null,
     series_id: null,
     created_by: 'admin-1',
     created_at: '2026-03-01T00:00:00Z',
@@ -194,6 +196,53 @@ describe('SessionForm', () => {
       const session = makeSession({ description: null });
       render(<SessionForm session={session} onSubmit={vi.fn()} />);
       expect(screen.getByLabelText(/description/i)).toHaveValue('');
+    });
+  });
+
+  describe('location field', () => {
+    it('renders location field in create mode', () => {
+      render(<SessionForm onSubmit={vi.fn()} />);
+      expect(screen.getByLabelText(/location/i)).toBeInTheDocument();
+    });
+
+    it('includes location in create form data', async () => {
+      const user = userEvent.setup();
+      const onSubmit = vi.fn().mockResolvedValue(undefined);
+      render(<SessionForm onSubmit={onSubmit} />);
+
+      await user.type(screen.getByLabelText(/title/i), 'Test');
+      await user.type(screen.getByLabelText(/date/i), '2026-04-01');
+      await user.type(screen.getByLabelText(/start time/i), '14:00');
+      await user.type(screen.getByLabelText(/end time/i), '18:00');
+      await user.type(screen.getByLabelText(/capacity/i), '8');
+      await user.type(screen.getByLabelText(/location/i), 'Room 42');
+
+      await user.click(screen.getByRole('button', { name: 'Create Session' }));
+
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({ location: 'Room 42' }),
+      );
+    });
+
+    it('pre-populates location in edit mode', () => {
+      const session = makeSession({ location: 'Room 42' });
+      render(<SessionForm session={session} onSubmit={vi.fn()} />);
+      expect(screen.getByLabelText(/location/i)).toHaveValue('Room 42');
+    });
+
+    it('sends location change on edit', async () => {
+      const user = userEvent.setup();
+      const onSubmit = vi.fn().mockResolvedValue(undefined);
+      const session = makeSession({ location: 'Room 42' });
+      render(<SessionForm session={session} onSubmit={onSubmit} />);
+
+      const locationInput = screen.getByLabelText(/location/i);
+      await user.clear(locationInput);
+      await user.type(locationInput, 'Room 99');
+
+      await user.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+      expect(onSubmit).toHaveBeenCalledWith({ location: 'Room 99' });
     });
   });
 

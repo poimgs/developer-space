@@ -7,6 +7,7 @@ import Toast from './components/Toast';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import LoginPage from './pages/LoginPage';
+import MemberProfilePage from './pages/MemberProfilePage';
 import MembersPage from './pages/MembersPage';
 import ProfilePage from './pages/ProfilePage';
 import SessionCreatePage from './pages/SessionCreatePage';
@@ -39,6 +40,7 @@ export default function App() {
                   <Route path="/" element={<SessionsPage />} />
                   <Route path="/sessions/:id" element={<SessionDetailPage />} />
                   <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/profile/:id" element={<MemberProfilePage />} />
                   <Route element={<AdminRoute />}>
                     <Route path="/sessions/new" element={<SessionCreatePage />} />
                     <Route path="/sessions/:id/edit" element={<SessionEditPage />} />

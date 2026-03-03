@@ -13,7 +13,8 @@ High-level app structure, navigation, page inventory, and all user workflows for
 | `/` | Sessions (Home) | Auth | Upcoming sessions, RSVP | [03](./03-session-management.md), [04](./04-rsvp.md) |
 | `/sessions/:id` | Session Detail | Auth | Full info, guest list, RSVP | [03](./03-session-management.md), [04](./04-rsvp.md) |
 | `/members` | Members | Admin | Member directory, CRUD | [01](./01-member-management.md) |
-| `/profile` | Profile | Auth | Self-edit name + telegram | [02](./02-authentication.md) |
+| `/profile` | Profile | Auth | Self-edit name, telegram, bio, skills, socials | [02](./02-authentication.md) |
+| `/profile/:id` | Member Profile | Auth | View another member's public profile | [02](./02-authentication.md) |
 
 **Access levels:**
 - **Public** — no authentication required.
@@ -98,9 +99,9 @@ Overlay closes on navigation or tapping outside.
 **Actor:** Authenticated member
 **Precondition:** At least one upcoming session exists with available capacity.
 
-1. Member views the sessions home page (`/`). Sessions are grouped under date headers ("Monday, March 9").
-2. Each session card shows: title, time range, capacity ("3/8 spots"), and an "RSVP" button.
-3. Member clicks "RSVP" on a session card.
+1. Member views the sessions home page (`/`). A horizontal **date picker strip** ([DateStrip](./09-design-patterns.md#datestrip)) shows upcoming dates with sessions. The selected date's session is displayed as a **hero card** below.
+2. The hero card shows: session image (if any), title, time range, location (if any), description, capacity ("3/8 spots"), and an "RSVP" button.
+3. Member clicks "RSVP" on the hero card.
 4. Button state changes to "Cancel RSVP" (secondary/outline style). Spot count updates optimistically.
 5. Success toast: "You're in!" (auto-dismisses after 3 seconds).
 6. Telegram notification sent: "[Name] RSVPed to [Session Title]".
@@ -114,7 +115,7 @@ Overlay closes on navigation or tapping outside.
 **Precondition:** Admin is authenticated.
 
 1. Admin views sessions home page. A "Create Session" button is visible (floating action button on mobile, top-right button on desktop).
-2. **Create:** Admin clicks "Create Session" → session form opens with fields: title, description (optional), date, start time, end time, capacity. Admin fills and submits → 201 → session appears in list, success toast "Session created." Telegram notification sent.
+2. **Create:** Admin clicks "Create Session" → session form opens with fields: title, description (optional), date, start time, end time, capacity, location (optional). Admin fills and submits → 201 → session appears in the date strip, success toast "Session created." Telegram notification sent.
 3. **Edit:** Admin clicks pencil icon on a session card → session form opens pre-populated. Admin changes fields and saves → 200 → card updates. If date/time changed, status becomes "Rescheduled" and Telegram notification sent. If session has RSVPs and date/time changed, email notifications are also sent to RSVPed members.
 4. **Cancel:** Admin clicks X icon → confirmation modal: "Cancel this session? This will cancel '[Title]' on [Date]. All RSVPed members will be notified. This action cannot be undone." Admin confirms → session status becomes "canceled", card shows muted/strikethrough style. Telegram notification + email to RSVPed members sent.
 
@@ -127,7 +128,7 @@ Overlay closes on navigation or tapping outside.
 2. A number input appears: "for N weeks" (1–12).
 3. Admin sets the repeat count (e.g., 4 weeks).
 4. On submit, the backend creates N+1 independent sessions in a single transaction (the original + N weekly copies).
-5. All sessions appear in the sessions list under their respective date headers.
+5. All sessions appear in the date strip, navigable via their respective date chips.
 6. Success toast: "Created 5 sessions."
 7. A single summary Telegram message is sent listing all created dates.
 8. After creation, each session is independent — editing or canceling one does not affect the others.
@@ -152,14 +153,28 @@ Overlay closes on navigation or tapping outside.
 
 1. Member clicks their name in the navbar → user menu dropdown → "Profile".
 2. Navigates to `/profile`.
-3. Profile page shows an inline form with two editable fields: **Name** (required) and **Telegram Handle** (optional).
+3. Profile page shows a sectioned form:
+   - **Identity:** Name (required), Telegram Handle (optional).
+   - **About:** Bio (optional, textarea, 500-char limit with counter), Skills (optional, [TagInput](./09-design-patterns.md#taginput), max 10 tags).
+   - **Social links:** LinkedIn URL (optional), Instagram Handle (optional), GitHub Username (optional).
 4. Fields are pre-populated from `GET /api/auth/me`.
-5. Member edits their name or telegram handle and clicks "Save".
+5. Member edits their profile and clicks "Save".
 6. `PATCH /api/auth/profile` is called with the updated fields.
 7. Success toast: "Profile updated."
 8. The navbar user menu reflects the updated name.
 
-### 8. Cancel/Reschedule Notification Flow
+### 9. Viewing Another Member's Profile
+
+**Actor:** Authenticated member (any role)
+**Precondition:** Member is logged in, target member is active.
+
+1. Member sees another member's name in a guest list (on session detail page) and clicks it.
+2. Browser navigates to `/profile/:id`.
+3. The page fetches `GET /api/profiles/:id` and renders a read-only card with: name, bio, skills (as tags), social links (LinkedIn, Instagram, GitHub — displayed as clickable icons/links), and Telegram handle.
+4. If the profile belongs to the current user, a link to the editable `/profile` page is shown.
+5. If the member is not found or inactive, a "Member not found" message is displayed with a back link.
+
+### 10. Cancel/Reschedule Notification Flow
 
 **Actor:** System (triggered by admin action)
 **Precondition:** A session with active RSVPs is canceled or rescheduled.

@@ -89,11 +89,6 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, messageResponse{Message: "Logged out"})
 }
 
-type updateProfileRequest struct {
-	Name           *string `json:"name"`
-	TelegramHandle *string `json:"telegram_handle"`
-}
-
 func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	member := middleware.MemberFromContext(r.Context())
 	if member == nil {
@@ -101,13 +96,13 @@ func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req updateProfileRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	var input service.ProfileUpdateInput
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		response.Error(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
-	updated, err := h.svc.UpdateProfile(r.Context(), member.ID, req.Name, req.TelegramHandle)
+	updated, err := h.svc.UpdateProfile(r.Context(), member.ID, input)
 	if err != nil {
 		var ve *service.ValidationError
 		if errors.As(err, &ve) {

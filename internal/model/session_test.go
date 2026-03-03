@@ -87,6 +87,116 @@ func TestSpaceSessionOmitsZeroRSVPCount(t *testing.T) {
 	}
 }
 
+func TestSpaceSessionImageURLAndLocation(t *testing.T) {
+	imageURL := "/uploads/sessions/abc-123.jpg"
+	location := "WeWork Coworking Space, Floor 3"
+	now := time.Now().Truncate(time.Millisecond)
+
+	s := SpaceSession{
+		ID:        uuid.New(),
+		Title:     "Session with Image",
+		Date:      "2026-03-15",
+		StartTime: "09:00",
+		EndTime:   "12:00",
+		Capacity:  8,
+		Status:    "scheduled",
+		ImageURL:  &imageURL,
+		Location:  &location,
+		CreatedBy: uuid.New(),
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	data, err := json.Marshal(s)
+	if err != nil {
+		t.Fatalf("failed to marshal session: %v", err)
+	}
+
+	var decoded SpaceSession
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		t.Fatalf("failed to unmarshal session: %v", err)
+	}
+
+	if decoded.ImageURL == nil || *decoded.ImageURL != imageURL {
+		t.Errorf("ImageURL = %v, want %q", decoded.ImageURL, imageURL)
+	}
+	if decoded.Location == nil || *decoded.Location != location {
+		t.Errorf("Location = %v, want %q", decoded.Location, location)
+	}
+}
+
+func TestSpaceSessionImageURLAndLocationNullWhenUnset(t *testing.T) {
+	s := SpaceSession{
+		ID:       uuid.New(),
+		Title:    "Session without Image",
+		Date:     "2026-03-15",
+		Capacity: 5,
+		Status:   "scheduled",
+	}
+
+	data, err := json.Marshal(s)
+	if err != nil {
+		t.Fatalf("failed to marshal: %v", err)
+	}
+
+	var raw map[string]interface{}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		t.Fatalf("failed to unmarshal: %v", err)
+	}
+
+	if raw["image_url"] != nil {
+		t.Errorf("expected image_url to be null, got %v", raw["image_url"])
+	}
+	if raw["location"] != nil {
+		t.Errorf("expected location to be null, got %v", raw["location"])
+	}
+}
+
+func TestCreateSessionRequestWithLocation(t *testing.T) {
+	body := `{"title":"Afternoon Session","date":"2026-03-20","start_time":"14:00","end_time":"17:00","capacity":6,"location":"Downtown Office"}`
+
+	var req CreateSessionRequest
+	if err := json.Unmarshal([]byte(body), &req); err != nil {
+		t.Fatalf("failed to unmarshal: %v", err)
+	}
+
+	if req.Title != "Afternoon Session" {
+		t.Errorf("Title = %q, want 'Afternoon Session'", req.Title)
+	}
+	if req.Location == nil || *req.Location != "Downtown Office" {
+		t.Errorf("Location = %v, want 'Downtown Office'", req.Location)
+	}
+}
+
+func TestCreateSessionRequestLocationOptional(t *testing.T) {
+	body := `{"title":"Afternoon Session","date":"2026-03-20","start_time":"14:00","end_time":"17:00","capacity":6}`
+
+	var req CreateSessionRequest
+	if err := json.Unmarshal([]byte(body), &req); err != nil {
+		t.Fatalf("failed to unmarshal: %v", err)
+	}
+
+	if req.Location != nil {
+		t.Errorf("Location should be nil when not provided, got %v", req.Location)
+	}
+}
+
+func TestUpdateSessionRequestWithLocation(t *testing.T) {
+	body := `{"location":"New Location"}`
+
+	var req UpdateSessionRequest
+	if err := json.Unmarshal([]byte(body), &req); err != nil {
+		t.Fatalf("failed to unmarshal: %v", err)
+	}
+
+	if req.Location == nil || *req.Location != "New Location" {
+		t.Errorf("Location = %v, want 'New Location'", req.Location)
+	}
+	if req.Title != nil {
+		t.Error("Title should be nil for partial update")
+	}
+}
+
 func TestCreateSessionRequestJSON(t *testing.T) {
 	body := `{"title":"Afternoon Session","date":"2026-03-20","start_time":"14:00","end_time":"17:00","capacity":6,"repeat_weekly":3}`
 

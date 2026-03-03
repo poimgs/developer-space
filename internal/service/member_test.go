@@ -75,6 +75,20 @@ func (m *mockMemberRepo) GetByID(ctx context.Context, id uuid.UUID) (*model.Memb
 	return member, nil
 }
 
+func (m *mockMemberRepo) GetByIDPublic(ctx context.Context, id uuid.UUID) (*model.PublicMember, error) {
+	member, ok := m.members[id]
+	if !ok {
+		return nil, nil
+	}
+	if !member.IsActive {
+		return nil, nil
+	}
+	return &model.PublicMember{
+		ID:   member.ID,
+		Name: member.Name,
+	}, nil
+}
+
 func (m *mockMemberRepo) GetByEmail(ctx context.Context, email string) (*model.Member, error) {
 	member, ok := m.byEmail[email]
 	if !ok {

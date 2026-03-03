@@ -8,21 +8,21 @@ Shared design tokens and reusable component patterns for the co-working space ap
 
 | Token | Light Mode | Dark Mode | Usage |
 |-------|-----------|-----------|-------|
-| `bg-primary` | `white` | `gray-900` | Page background |
-| `bg-secondary` | `gray-50` | `gray-800` | Cards, panels |
-| `bg-tertiary` | `gray-100` | `gray-700` | Hover states, nested panels |
-| `text-primary` | `gray-900` | `gray-100` | Headings, body text |
-| `text-secondary` | `gray-500` | `gray-400` | Subtext, labels, timestamps |
-| `accent` | `indigo-600` | `indigo-400` | Buttons, links, active states |
-| `accent-hover` | `indigo-700` | `indigo-300` | Hover on accent elements |
-| `border` | `gray-200` | `gray-700` | Card borders, dividers |
+| `bg-primary` | `white` | `stone-900` | Page background |
+| `bg-secondary` | `stone-50` | `stone-800` | Cards, panels |
+| `bg-tertiary` | `stone-100` | `stone-700` | Hover states, nested panels |
+| `text-primary` | `stone-900` | `stone-100` | Headings, body text |
+| `text-secondary` | `stone-500` | `stone-400` | Subtext, labels, timestamps |
+| `accent` | `amber-600` | `amber-400` | Text on light backgrounds (links, labels, active states) |
+| `accent-hover` | `amber-700` | `amber-300` | Hover on accent text elements |
+| `border` | `stone-200` | `stone-700` | Card borders, dividers |
 | `status-scheduled` | `green-100` text `green-800` | `green-900` text `green-300` | Scheduled badge |
 | `status-rescheduled` | `amber-100` text `amber-800` | `amber-900` text `amber-300` | Rescheduled (shifted) badge |
 | `status-canceled` | `red-100` text `red-800` | `red-900` text `red-300` | Canceled badge |
 
 ### Accent Color
 
-Indigo is the primary accent throughout the app — used for primary buttons, links, active nav items, and focus rings. It provides a professional, accessible contrast on both light and dark backgrounds.
+Amber/gold is the primary accent throughout the app. `amber-500` (#F59E0B) is used for filled backgrounds where text is white (primary buttons, selected chips) — white-on-amber meets WCAG AA. `amber-600` (#D97706) is used for text on light backgrounds (links, secondary labels, active states) to meet WCAG AA 4.5:1 contrast. Combined with warm stone-based neutrals, it creates a warm, inviting atmosphere that reflects the co-working community feel.
 
 ## Dark Mode
 
@@ -114,7 +114,7 @@ Ephemeral feedback messages for user actions.
 |------|------------------|------|-------------|
 | Success | `border-l-4 border-green-500` | Checkmark | 3 seconds |
 | Error | `border-l-4 border-red-500` | X circle | 5 seconds |
-| Info | `border-l-4 border-indigo-500` | Info circle | 3 seconds |
+| Info | `border-l-4 border-amber-500` | Info circle | 3 seconds |
 
 **Behavior:**
 - Slide in from right, fade out on dismiss.
@@ -129,7 +129,7 @@ Required for all destructive actions.
 
 **Layout:**
 - Centered overlay with semi-transparent backdrop (`bg-black/50`).
-- White (dark: `gray-800`) card with `rounded-lg p-6 max-w-md` (desktop), near-full-width on mobile.
+- White (dark: `stone-800`) card with `rounded-xl p-6 max-w-md` (desktop), near-full-width on mobile.
 - Content: title (bold) + descriptive message + two buttons.
 - Buttons: secondary "Cancel" (left) + destructive action (right, red background).
 
@@ -156,7 +156,7 @@ Each feature spec defines its own icon, heading, subtext, and CTA. This pattern 
 Consistent form behavior across all create/edit forms.
 
 - **Labels:** Above inputs, `text-sm font-medium text-primary`.
-- **Inputs:** Full-width, `border rounded-md px-3 py-2`, focus ring in accent color.
+- **Inputs:** Full-width, `border border-stone-300 dark:border-stone-600 rounded-lg px-3 py-2`, focus ring in accent color (`focus:ring-amber-500`).
 - **Validation errors:** Below the field, `text-xs text-red-600 dark:text-red-400`, shown inline after submission or on blur.
 - **Submit button:** Full-width on mobile, right-aligned on desktop.
 - **Loading state:** Submit button shows a spinner icon + disabled (`opacity-50 cursor-not-allowed`) during submission. Button text changes (e.g., "Saving...").
@@ -167,20 +167,20 @@ Consistent form behavior across all create/edit forms.
 Container for list items (sessions, members on mobile).
 
 ```
-Classes: bg-secondary border border-border rounded-lg p-4
+Classes: bg-secondary border border-border rounded-xl p-4 shadow-sm
 ```
 
-- Light: `bg-gray-50 border-gray-200`
-- Dark: `dark:bg-gray-800 dark:border-gray-700`
-- Hover state (if clickable): `hover:bg-tertiary` transition.
-- Used for session cards, member cards on mobile.
+- Light: `bg-stone-50 border-stone-200`
+- Dark: `dark:bg-stone-800 dark:border-stone-700`
+- Hover state (if clickable): `hover:bg-tertiary hover:shadow-md` transition.
+- Used for session cards, member cards on mobile, profile cards.
 
 ### Table Pattern
 
 Used for structured data on desktop (members list).
 
 - **Desktop (>= 768px):** Standard `<table>` with:
-  - Header row: `bg-tertiary text-secondary text-xs uppercase tracking-wider`.
+  - Header row: `bg-stone-100 dark:bg-stone-700 text-secondary text-xs uppercase tracking-wider`.
   - Body rows: `border-b border-border`, hover highlight.
   - Row actions as icon buttons (right-aligned column).
 - **Mobile (< 768px):** Collapses to card list. Each row becomes a card (per card pattern above) with key-value pairs stacked vertically and actions inline.
@@ -189,9 +189,76 @@ Used for structured data on desktop (members list).
 
 | Variant | Classes | Usage |
 |---------|---------|-------|
-| Primary | `bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-500 dark:hover:bg-indigo-400` | Main actions (RSVP, Save, Create) |
-| Secondary | `bg-transparent border border-indigo-600 text-indigo-600 hover:bg-indigo-50 dark:border-indigo-400 dark:text-indigo-400 dark:hover:bg-indigo-950` | Cancel RSVP, secondary actions |
+| Primary | `bg-amber-500 hover:bg-amber-600 text-white dark:bg-amber-500 dark:hover:bg-amber-400` | Main actions (RSVP, Save, Create) |
+| Secondary | `bg-transparent border border-amber-500 text-amber-700 hover:bg-amber-50 dark:border-amber-400 dark:text-amber-400 dark:hover:bg-amber-950` | Cancel RSVP, secondary actions |
 | Destructive | `bg-red-600 hover:bg-red-700 text-white dark:bg-red-500 dark:hover:bg-red-400` | Delete, Cancel Session |
-| Disabled | `bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-700 dark:text-gray-500` | Full sessions, loading states |
+| Disabled | `bg-stone-200 text-stone-400 cursor-not-allowed dark:bg-stone-700 dark:text-stone-500` | Full sessions, loading states |
 
-All buttons: `rounded-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`.
+All buttons: `rounded-lg px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500`.
+
+## Additional Component Patterns
+
+### TagInput
+
+Reusable tag input for skills and similar tag-based fields.
+
+**Layout:**
+- Text input with pill-shaped tags displayed inline above or inside the input area.
+- Each tag has an "×" remove button.
+- Tags are added by pressing Enter or comma. Duplicates are silently ignored.
+- Maximum tag count enforced (e.g., 10 for skills). Input is disabled when max reached.
+
+**Styling:**
+- Tags: `bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300 rounded-full px-2.5 py-0.5 text-xs font-medium` (same shape as status badges).
+- Remove button: `ml-1 text-amber-700 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-200`.
+- Input: standard form input styling from [form patterns](#form-patterns).
+
+**Props:** `value: string[]`, `onChange: (tags: string[]) => void`, `max?: number`, `placeholder?: string`.
+
+### DateStrip
+
+Horizontal scrollable date picker for the sessions home page.
+
+**Layout:**
+- Horizontally scrollable strip of date "chips", one per date that has a session.
+- Each chip shows the day-of-week abbreviation (Mon, Tue, ...) and the day number.
+- The selected/active date chip is highlighted with the accent color.
+- Dates without sessions are not shown (only dates with at least one session appear).
+- Auto-scrolls to center the selected date on load.
+
+**Styling:**
+- Container: `flex gap-2 overflow-x-auto py-2 px-1 scrollbar-hide`.
+- Chip (default): `flex flex-col items-center px-3 py-2 rounded-xl text-sm cursor-pointer bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-400 min-w-[3.5rem]`.
+- Chip (selected): `bg-amber-500 text-white dark:bg-amber-500 dark:text-white shadow-md`.
+- Day label: `text-xs font-medium uppercase`.
+- Date number: `text-lg font-bold`.
+
+**Behavior:**
+- Clicking a date chip selects that date and displays its session(s) as hero card(s) below.
+- On page load, defaults to the nearest upcoming date with a session.
+- If multiple sessions exist on the same date, show them as stacked hero cards.
+
+**Props:** `dates: { date: string; sessionCount: number }[]`, `selected: string`, `onSelect: (date: string) => void`.
+
+### ImageUpload
+
+File upload component for session images (admin only).
+
+**Layout:**
+- Dropzone area with a dashed border, camera/upload icon, and "Click or drag to upload" text.
+- If an image is already set, shows a thumbnail preview with a "Remove" / "Replace" button.
+- File type hint: "JPEG, PNG, or WebP, max 5MB".
+
+**Styling:**
+- Dropzone: `border-2 border-dashed border-stone-300 dark:border-stone-600 rounded-xl p-8 text-center cursor-pointer hover:border-amber-500 dark:hover:border-amber-400 transition-colors`.
+- Preview: `relative rounded-xl overflow-hidden` with overlay controls on hover.
+- Upload progress: amber-colored progress bar.
+
+**Behavior:**
+- Accepts click-to-browse or drag-and-drop.
+- Validates file type (JPEG, PNG, WebP) and size (max 5MB) client-side before upload.
+- Shows upload progress indicator.
+- On success, displays thumbnail preview and emits the new `image_url`.
+- On error, shows toast with error message.
+
+**Props:** `sessionId: string`, `currentImageUrl?: string`, `onUpload: (imageUrl: string) => void`.

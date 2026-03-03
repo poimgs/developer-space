@@ -26,9 +26,9 @@ func (r *MemberRepository) Create(ctx context.Context, req model.CreateMemberReq
 	err := r.pool.QueryRow(ctx,
 		`INSERT INTO members (email, name, telegram_handle, is_admin)
 		 VALUES ($1, $2, $3, $4)
-		 RETURNING id, email, name, telegram_handle, is_admin, is_active, created_at, updated_at`,
+		 RETURNING id, email, name, telegram_handle, is_admin, is_active, bio, skills, linkedin_url, instagram_handle, github_username, created_at, updated_at`,
 		req.Email, req.Name, req.TelegramHandle, req.IsAdmin,
-	).Scan(&m.ID, &m.Email, &m.Name, &m.TelegramHandle, &m.IsAdmin, &m.IsActive, &m.CreatedAt, &m.UpdatedAt)
+	).Scan(&m.ID, &m.Email, &m.Name, &m.TelegramHandle, &m.IsAdmin, &m.IsActive, &m.Bio, &m.Skills, &m.LinkedinURL, &m.InstagramHandle, &m.GithubUsername, &m.CreatedAt, &m.UpdatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("inserting member: %w", err)
 	}
@@ -41,13 +41,13 @@ func (r *MemberRepository) List(ctx context.Context, activeFilter string) ([]mod
 
 	switch activeFilter {
 	case "false":
-		query = `SELECT id, email, name, telegram_handle, is_admin, is_active, created_at, updated_at
+		query = `SELECT id, email, name, telegram_handle, is_admin, is_active, bio, skills, linkedin_url, instagram_handle, github_username, created_at, updated_at
 				 FROM members WHERE is_active = false ORDER BY name`
 	case "all":
-		query = `SELECT id, email, name, telegram_handle, is_admin, is_active, created_at, updated_at
+		query = `SELECT id, email, name, telegram_handle, is_admin, is_active, bio, skills, linkedin_url, instagram_handle, github_username, created_at, updated_at
 				 FROM members ORDER BY name`
 	default: // "true" or empty
-		query = `SELECT id, email, name, telegram_handle, is_admin, is_active, created_at, updated_at
+		query = `SELECT id, email, name, telegram_handle, is_admin, is_active, bio, skills, linkedin_url, instagram_handle, github_username, created_at, updated_at
 				 FROM members WHERE is_active = true ORDER BY name`
 	}
 
@@ -60,7 +60,7 @@ func (r *MemberRepository) List(ctx context.Context, activeFilter string) ([]mod
 	var members []model.Member
 	for rows.Next() {
 		var m model.Member
-		if err := rows.Scan(&m.ID, &m.Email, &m.Name, &m.TelegramHandle, &m.IsAdmin, &m.IsActive, &m.CreatedAt, &m.UpdatedAt); err != nil {
+		if err := rows.Scan(&m.ID, &m.Email, &m.Name, &m.TelegramHandle, &m.IsAdmin, &m.IsActive, &m.Bio, &m.Skills, &m.LinkedinURL, &m.InstagramHandle, &m.GithubUsername, &m.CreatedAt, &m.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("scanning member: %w", err)
 		}
 		members = append(members, m)
@@ -76,9 +76,9 @@ func (r *MemberRepository) List(ctx context.Context, activeFilter string) ([]mod
 func (r *MemberRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.Member, error) {
 	var m model.Member
 	err := r.pool.QueryRow(ctx,
-		`SELECT id, email, name, telegram_handle, is_admin, is_active, created_at, updated_at
+		`SELECT id, email, name, telegram_handle, is_admin, is_active, bio, skills, linkedin_url, instagram_handle, github_username, created_at, updated_at
 		 FROM members WHERE id = $1`, id,
-	).Scan(&m.ID, &m.Email, &m.Name, &m.TelegramHandle, &m.IsAdmin, &m.IsActive, &m.CreatedAt, &m.UpdatedAt)
+	).Scan(&m.ID, &m.Email, &m.Name, &m.TelegramHandle, &m.IsAdmin, &m.IsActive, &m.Bio, &m.Skills, &m.LinkedinURL, &m.InstagramHandle, &m.GithubUsername, &m.CreatedAt, &m.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
@@ -91,9 +91,9 @@ func (r *MemberRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.Me
 func (r *MemberRepository) GetByEmail(ctx context.Context, email string) (*model.Member, error) {
 	var m model.Member
 	err := r.pool.QueryRow(ctx,
-		`SELECT id, email, name, telegram_handle, is_admin, is_active, created_at, updated_at
+		`SELECT id, email, name, telegram_handle, is_admin, is_active, bio, skills, linkedin_url, instagram_handle, github_username, created_at, updated_at
 		 FROM members WHERE email = $1`, email,
-	).Scan(&m.ID, &m.Email, &m.Name, &m.TelegramHandle, &m.IsAdmin, &m.IsActive, &m.CreatedAt, &m.UpdatedAt)
+	).Scan(&m.ID, &m.Email, &m.Name, &m.TelegramHandle, &m.IsAdmin, &m.IsActive, &m.Bio, &m.Skills, &m.LinkedinURL, &m.InstagramHandle, &m.GithubUsername, &m.CreatedAt, &m.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
@@ -128,6 +128,31 @@ func (r *MemberRepository) Update(ctx context.Context, id uuid.UUID, req model.U
 		args = append(args, *req.IsActive)
 		argIdx++
 	}
+	if req.Bio != nil {
+		setClauses = append(setClauses, fmt.Sprintf("bio = $%d", argIdx))
+		args = append(args, *req.Bio)
+		argIdx++
+	}
+	if req.Skills != nil {
+		setClauses = append(setClauses, fmt.Sprintf("skills = $%d", argIdx))
+		args = append(args, req.Skills)
+		argIdx++
+	}
+	if req.LinkedinURL != nil {
+		setClauses = append(setClauses, fmt.Sprintf("linkedin_url = $%d", argIdx))
+		args = append(args, *req.LinkedinURL)
+		argIdx++
+	}
+	if req.InstagramHandle != nil {
+		setClauses = append(setClauses, fmt.Sprintf("instagram_handle = $%d", argIdx))
+		args = append(args, *req.InstagramHandle)
+		argIdx++
+	}
+	if req.GithubUsername != nil {
+		setClauses = append(setClauses, fmt.Sprintf("github_username = $%d", argIdx))
+		args = append(args, *req.GithubUsername)
+		argIdx++
+	}
 
 	if len(setClauses) == 0 {
 		return r.GetByID(ctx, id)
@@ -138,19 +163,34 @@ func (r *MemberRepository) Update(ctx context.Context, id uuid.UUID, req model.U
 
 	query := fmt.Sprintf(
 		`UPDATE members SET %s WHERE id = $%d
-		 RETURNING id, email, name, telegram_handle, is_admin, is_active, created_at, updated_at`,
+		 RETURNING id, email, name, telegram_handle, is_admin, is_active, bio, skills, linkedin_url, instagram_handle, github_username, created_at, updated_at`,
 		strings.Join(setClauses, ", "), argIdx,
 	)
 
 	var m model.Member
 	err := r.pool.QueryRow(ctx, query, args...).Scan(
-		&m.ID, &m.Email, &m.Name, &m.TelegramHandle, &m.IsAdmin, &m.IsActive, &m.CreatedAt, &m.UpdatedAt,
+		&m.ID, &m.Email, &m.Name, &m.TelegramHandle, &m.IsAdmin, &m.IsActive, &m.Bio, &m.Skills, &m.LinkedinURL, &m.InstagramHandle, &m.GithubUsername, &m.CreatedAt, &m.UpdatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("updating member: %w", err)
+	}
+	return &m, nil
+}
+
+func (r *MemberRepository) GetByIDPublic(ctx context.Context, id uuid.UUID) (*model.PublicMember, error) {
+	var m model.PublicMember
+	err := r.pool.QueryRow(ctx,
+		`SELECT id, name, telegram_handle, bio, skills, linkedin_url, instagram_handle, github_username
+		 FROM members WHERE id = $1 AND is_active = true`, id,
+	).Scan(&m.ID, &m.Name, &m.TelegramHandle, &m.Bio, &m.Skills, &m.LinkedinURL, &m.InstagramHandle, &m.GithubUsername)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("getting public member by id: %w", err)
 	}
 	return &m, nil
 }

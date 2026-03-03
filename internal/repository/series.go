@@ -101,9 +101,9 @@ func (r *SeriesRepository) GenerateSessions(ctx context.Context, series model.Se
 			`INSERT INTO space_sessions (title, description, date, start_time, end_time, capacity, status, series_id, created_by)
 			 VALUES ($1, $2, $3, $4, $5, $6, 'scheduled', $7, $8)
 			 ON CONFLICT (series_id, date) WHERE series_id IS NOT NULL DO NOTHING
-			 RETURNING id, title, description, date::text, to_char(start_time, 'HH24:MI'), to_char(end_time, 'HH24:MI'), capacity, status, series_id, created_by, created_at, updated_at`,
+			 RETURNING id, title, description, date::text, to_char(start_time, 'HH24:MI'), to_char(end_time, 'HH24:MI'), capacity, status, image_url, location, series_id, created_by, created_at, updated_at`,
 			series.Title, series.Description, dateStr, series.StartTime, series.EndTime, series.Capacity, series.ID, series.CreatedBy,
-		).Scan(&s.ID, &s.Title, &s.Description, &s.Date, &s.StartTime, &s.EndTime, &s.Capacity, &s.Status, &s.SeriesID, &s.CreatedBy, &s.CreatedAt, &s.UpdatedAt)
+		).Scan(&s.ID, &s.Title, &s.Description, &s.Date, &s.StartTime, &s.EndTime, &s.Capacity, &s.Status, &s.ImageURL, &s.Location, &s.SeriesID, &s.CreatedBy, &s.CreatedAt, &s.UpdatedAt)
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				// ON CONFLICT DO NOTHING — session already exists for this date

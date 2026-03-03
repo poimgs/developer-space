@@ -102,7 +102,7 @@ export default function MembersPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-600 border-t-transparent" />
       </div>
     );
   }
@@ -111,7 +111,7 @@ export default function MembersPage() {
     <div className="space-y-4">
       {/* Header: filter + add button */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex gap-1 rounded-md border border-gray-300 p-1 dark:border-gray-600">
+        <div className="flex gap-1 rounded-md border border-stone-300 p-1 dark:border-stone-600">
           {([['true', 'Active'], ['false', 'Inactive'], ['all', 'All']] as const).map(
             ([value, label]) => (
               <button
@@ -119,8 +119,8 @@ export default function MembersPage() {
                 onClick={() => setActiveFilter(value)}
                 className={`rounded px-3 py-1 text-sm font-medium transition-colors ${
                   activeFilter === value
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
+                    ? 'bg-amber-600 text-white'
+                    : 'text-stone-600 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-700'
                 }`}
               >
                 {label}
@@ -133,7 +133,7 @@ export default function MembersPage() {
             setEditingMember(null);
             setShowForm(true);
           }}
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+          className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-700"
         >
           Add Member
         </button>
@@ -141,8 +141,8 @@ export default function MembersPage() {
 
       {/* Create / Edit form */}
       {(showForm || editingMember) && (
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
+        <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-700 dark:bg-stone-800">
+          <h2 className="mb-4 text-lg font-semibold text-stone-900 dark:text-stone-100">
             {editingMember ? 'Edit Member' : 'Add Member'}
           </h2>
           <MemberForm
@@ -216,31 +216,31 @@ export default function MembersPage() {
       {/* Desktop table */}
       {members.length > 0 && (
         <>
-          <div className="hidden overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 md:block">
+          <div className="hidden overflow-hidden rounded-xl border border-stone-200 dark:border-stone-700 md:block">
             <table className="w-full text-left text-sm">
-              <thead className="bg-gray-50 dark:bg-gray-800">
+              <thead className="bg-stone-50 dark:bg-stone-800">
                 <tr>
-                  <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Name</th>
-                  <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Email</th>
-                  <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Telegram</th>
-                  <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Role</th>
-                  <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Status</th>
-                  <th className="px-4 py-3 font-medium text-gray-600 dark:text-gray-400">Actions</th>
+                  <th className="px-4 py-3 font-medium text-stone-600 dark:text-stone-400">Name</th>
+                  <th className="px-4 py-3 font-medium text-stone-600 dark:text-stone-400">Email</th>
+                  <th className="px-4 py-3 font-medium text-stone-600 dark:text-stone-400">Telegram</th>
+                  <th className="px-4 py-3 font-medium text-stone-600 dark:text-stone-400">Role</th>
+                  <th className="px-4 py-3 font-medium text-stone-600 dark:text-stone-400">Status</th>
+                  <th className="px-4 py-3 font-medium text-stone-600 dark:text-stone-400">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="divide-y divide-stone-200 dark:divide-stone-700">
                 {members.map((m) => (
-                  <tr key={m.id} className="bg-white dark:bg-gray-900">
-                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">
+                  <tr key={m.id} className="bg-white dark:bg-stone-900">
+                    <td className="px-4 py-3 font-medium text-stone-900 dark:text-stone-100">
                       {m.name}
                     </td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{m.email}</td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                    <td className="px-4 py-3 text-stone-600 dark:text-stone-400">{m.email}</td>
+                    <td className="px-4 py-3 text-stone-600 dark:text-stone-400">
                       {m.telegram_handle ? `@${m.telegram_handle}` : '—'}
                     </td>
                     <td className="px-4 py-3">
                       {m.is_admin && (
-                        <span className="inline-flex rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">
+                        <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900 dark:text-amber-300">
                           Admin
                         </span>
                       )}
@@ -250,7 +250,7 @@ export default function MembersPage() {
                         className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
                           m.is_active
                             ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-                            : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                            : 'bg-stone-100 text-stone-600 dark:bg-stone-700 dark:text-stone-400'
                         }`}
                       >
                         {m.is_active ? 'Active' : 'Inactive'}
@@ -266,7 +266,7 @@ export default function MembersPage() {
                                 is_active: !m.is_active,
                               })
                             }
-                            className="text-gray-500 hover:text-amber-600 dark:text-gray-400 dark:hover:text-amber-400"
+                            className="text-stone-500 hover:text-amber-600 dark:text-stone-400 dark:hover:text-amber-400"
                             aria-label={m.is_active ? `Deactivate ${m.name}` : `Activate ${m.name}`}
                             title={m.is_active ? 'Deactivate' : 'Activate'}
                           >
@@ -286,7 +286,7 @@ export default function MembersPage() {
                             setShowForm(false);
                             setEditingMember(m);
                           }}
-                          className="text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
+                          className="text-stone-500 hover:text-amber-600 dark:text-stone-400 dark:hover:text-amber-400"
                           aria-label={`Edit ${m.name}`}
                         >
                           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -296,7 +296,7 @@ export default function MembersPage() {
                         {user?.id !== m.id && (
                           <button
                             onClick={() => setDeletingMember(m)}
-                            className="text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+                            className="text-stone-500 hover:text-red-600 dark:text-stone-400 dark:hover:text-red-400"
                             aria-label={`Delete ${m.name}`}
                           >
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -317,12 +317,12 @@ export default function MembersPage() {
             {members.map((m) => (
               <div
                 key={m.id}
-                className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+                className="rounded-xl border border-stone-200 bg-white p-4 dark:border-stone-700 dark:bg-stone-800"
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="font-medium text-gray-900 dark:text-gray-100">{m.name}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{m.email}</p>
+                    <p className="font-medium text-stone-900 dark:text-stone-100">{m.name}</p>
+                    <p className="text-sm text-stone-500 dark:text-stone-400">{m.email}</p>
                   </div>
                   <div className="flex gap-2">
                     {user?.id !== m.id && (
@@ -333,7 +333,7 @@ export default function MembersPage() {
                             is_active: !m.is_active,
                           })
                         }
-                        className="text-gray-500 hover:text-amber-600 dark:text-gray-400 dark:hover:text-amber-400"
+                        className="text-stone-500 hover:text-amber-600 dark:text-stone-400 dark:hover:text-amber-400"
                         aria-label={m.is_active ? `Deactivate ${m.name}` : `Activate ${m.name}`}
                         title={m.is_active ? 'Deactivate' : 'Activate'}
                       >
@@ -353,7 +353,7 @@ export default function MembersPage() {
                         setShowForm(false);
                         setEditingMember(m);
                       }}
-                      className="text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
+                      className="text-stone-500 hover:text-amber-600 dark:text-stone-400 dark:hover:text-amber-400"
                       aria-label={`Edit ${m.name}`}
                     >
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -363,7 +363,7 @@ export default function MembersPage() {
                     {user?.id !== m.id && (
                       <button
                         onClick={() => setDeletingMember(m)}
-                        className="text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+                        className="text-stone-500 hover:text-red-600 dark:text-stone-400 dark:hover:text-red-400"
                         aria-label={`Delete ${m.name}`}
                       >
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -375,12 +375,12 @@ export default function MembersPage() {
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {m.telegram_handle && (
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                    <span className="text-sm text-stone-500 dark:text-stone-400">
                       @{m.telegram_handle}
                     </span>
                   )}
                   {m.is_admin && (
-                    <span className="inline-flex rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">
+                    <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900 dark:text-amber-300">
                       Admin
                     </span>
                   )}
@@ -388,7 +388,7 @@ export default function MembersPage() {
                     className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
                       m.is_active
                         ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-                        : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                        : 'bg-stone-100 text-stone-600 dark:bg-stone-700 dark:text-stone-400'
                     }`}
                   >
                     {m.is_active ? 'Active' : 'Inactive'}

@@ -5,6 +5,11 @@ export interface Member {
   telegram_handle: string | null;
   is_admin: boolean;
   is_active: boolean;
+  bio: string | null;
+  skills: string[];
+  linkedin_url: string | null;
+  instagram_handle: string | null;
+  github_username: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -24,6 +29,17 @@ export interface UpdateMemberRequest {
   is_active?: boolean;
 }
 
+export interface PublicMember {
+  id: string;
+  name: string;
+  telegram_handle: string | null;
+  bio: string | null;
+  skills: string[];
+  linkedin_url: string | null;
+  instagram_handle: string | null;
+  github_username: string | null;
+}
+
 export interface SpaceSession {
   id: string;
   title: string;
@@ -33,6 +49,8 @@ export interface SpaceSession {
   end_time: string;
   capacity: number;
   status: 'scheduled' | 'shifted' | 'canceled';
+  image_url: string | null;
+  location: string | null;
   series_id: string | null;
   created_by: string;
   created_at: string;
@@ -48,6 +66,7 @@ export interface CreateSessionRequest {
   start_time: string;
   end_time: string;
   capacity: number;
+  location?: string | null;
   repeat_weekly?: number;
   repeat_forever?: boolean;
 }
@@ -59,6 +78,17 @@ export interface UpdateSessionRequest {
   start_time?: string;
   end_time?: string;
   capacity?: number;
+  location?: string | null;
+}
+
+export interface UpdateProfileRequest {
+  name?: string;
+  telegram_handle?: string;
+  bio?: string;
+  skills?: string[];
+  linkedin_url?: string;
+  instagram_handle?: string;
+  github_username?: string;
 }
 
 export interface RSVP {

@@ -94,12 +94,25 @@ func main() {
 	sessionSvc.SetEmailNotifier(emailSender, rsvpRepo)
 	rsvpSvc := service.NewRSVPService(rsvpRepo, memberRepo, notifier)
 
+	// Ensure uploads directory exists
+	uploadsDir := "uploads/sessions"
+	if err := os.MkdirAll(uploadsDir, 0755); err != nil {
+		logger.Error("failed to create uploads directory", "error", err)
+		os.Exit(1)
+	}
+
 	memberHandler := handler.NewMemberHandler(memberSvc)
 	authHandler := handler.NewAuthHandler(authSvc)
 	sessionHandler := handler.NewSessionHandler(sessionSvc)
 	rsvpHandler := handler.NewRSVPHandler(rsvpSvc)
+	profileHandler := handler.NewProfileHandler(authSvc)
+	imageHandler := handler.NewImageHandler(sessionSvc, uploadsDir)
 
-	handler.RegisterRoutes(r, memberHandler, authHandler, sessionHandler, rsvpHandler, authSvc, memberRepo)
+	handler.RegisterRoutes(r, memberHandler, authHandler, sessionHandler, rsvpHandler, profileHandler, imageHandler, authSvc, memberRepo)
+
+	// Serve uploaded files
+	fileServer := http.FileServer(http.Dir("."))
+	r.Handle("/uploads/*", fileServer)
 
 	// Background token cleanup every hour
 	go func() {

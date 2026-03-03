@@ -1,7 +1,9 @@
+import { useMemo, useState } from 'react';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { api, ApiError } from '../api/client';
-import SessionCard, { formatDateLabel } from '../components/SessionCard';
+import DateStrip, { type DateChip } from '../components/DateStrip';
+import SessionCard from '../components/SessionCard';
 import EmptyState from '../components/EmptyState';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -20,6 +22,33 @@ export default function SessionsPage() {
       return res.data;
     },
   });
+
+  // Derive date chips and default selection
+  const dateChips = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const s of sessions) {
+      map.set(s.date, (map.get(s.date) ?? 0) + 1);
+    }
+    return Array.from(map.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, sessionCount]): DateChip => ({ date, sessionCount }));
+  }, [sessions]);
+
+  const defaultDate = useMemo(() => {
+    if (dateChips.length === 0) return '';
+    const today = new Date().toISOString().split('T')[0];
+    const upcoming = dateChips.find((c) => c.date >= today);
+    return upcoming?.date ?? dateChips[dateChips.length - 1].date;
+  }, [dateChips]);
+
+  const [selectedDate, setSelectedDate] = useState<string>('');
+  const activeDate = selectedDate || defaultDate;
+
+  // Sessions for the selected date
+  const selectedSessions = useMemo(
+    () => sessions.filter((s) => s.date === activeDate),
+    [sessions, activeDate],
+  );
 
   // Fetch RSVPs for all displayed sessions in parallel
   const rsvpQueries = useQueries({
@@ -117,7 +146,7 @@ export default function SessionsPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-600 border-t-transparent" />
       </div>
     );
   }
@@ -129,7 +158,7 @@ export default function SessionsPage() {
           <div className="mb-6 flex justify-end">
             <Link
               to="/sessions/new"
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+              className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-700"
             >
               Create Session
             </Link>
@@ -148,51 +177,39 @@ export default function SessionsPage() {
     );
   }
 
-  // Group sessions by date
-  const grouped = groupByDate(sessions);
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {isAdmin && (
         <div className="flex justify-end">
           <Link
             to="/sessions/new"
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+            className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-700"
           >
             Create Session
           </Link>
         </div>
       )}
-      {grouped.map(({ date, sessions: dateSessions }) => (
-        <div key={date}>
-          <h2 className="sticky top-0 z-10 bg-gray-50 py-2 text-sm font-semibold text-gray-900 dark:bg-gray-900 dark:text-gray-100 md:static">
-            {formatDateLabel(date)}
-          </h2>
-          <div className="mt-2 space-y-3">
-            {dateSessions.map((session) => (
-              <SessionCard
-                key={session.id}
-                session={session}
-                attendees={attendeesMap.get(session.id)}
-                onRSVP={(id) => rsvpMutation.mutate(id)}
-                onCancelRSVP={(id) => cancelRSVPMutation.mutate(id)}
-                onCancelSession={(id) => cancelSessionMutation.mutate(id)}
-                rsvpLoading={rsvpMutation.isPending || cancelRSVPMutation.isPending}
-              />
-            ))}
-          </div>
-        </div>
-      ))}
+
+      <DateStrip
+        dates={dateChips}
+        selected={activeDate}
+        onSelect={setSelectedDate}
+      />
+
+      <div className="space-y-4">
+        {selectedSessions.map((session) => (
+          <SessionCard
+            key={session.id}
+            session={session}
+            attendees={attendeesMap.get(session.id)}
+            onRSVP={(id) => rsvpMutation.mutate(id)}
+            onCancelRSVP={(id) => cancelRSVPMutation.mutate(id)}
+            onCancelSession={(id) => cancelSessionMutation.mutate(id)}
+            rsvpLoading={rsvpMutation.isPending || cancelRSVPMutation.isPending}
+            variant="hero"
+          />
+        ))}
+      </div>
     </div>
   );
-}
-
-function groupByDate(sessions: SpaceSession[]): { date: string; sessions: SpaceSession[] }[] {
-  const map = new Map<string, SpaceSession[]>();
-  for (const session of sessions) {
-    const existing = map.get(session.date) ?? [];
-    existing.push(session);
-    map.set(session.date, existing);
-  }
-  return Array.from(map.entries()).map(([date, sessions]) => ({ date, sessions }));
 }

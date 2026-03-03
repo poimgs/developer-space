@@ -7,7 +7,7 @@ import (
 	"github.com/developer-space/api/internal/service"
 )
 
-func RegisterRoutes(r chi.Router, memberHandler *MemberHandler, authHandler *AuthHandler, sessionHandler *SessionHandler, rsvpHandler *RSVPHandler, authSvc *service.AuthService, memberRepo middleware.MemberLookup) {
+func RegisterRoutes(r chi.Router, memberHandler *MemberHandler, authHandler *AuthHandler, sessionHandler *SessionHandler, rsvpHandler *RSVPHandler, profileHandler *ProfileHandler, imageHandler *ImageHandler, authSvc *service.AuthService, memberRepo middleware.MemberLookup) {
 	// Public auth routes
 	r.Route("/api/auth", func(r chi.Router) {
 		r.Post("/magic-link", authHandler.RequestMagicLink)
@@ -20,6 +20,12 @@ func RegisterRoutes(r chi.Router, memberHandler *MemberHandler, authHandler *Aut
 			r.Get("/me", authHandler.Me)
 			r.Patch("/profile", authHandler.UpdateProfile)
 		})
+	})
+
+	// Public profile routes (authenticated)
+	r.Route("/api/profiles", func(r chi.Router) {
+		r.Use(middleware.Auth(authSvc, memberRepo))
+		r.Get("/{id}", profileHandler.GetPublicProfile)
 	})
 
 	// Admin-only member routes
@@ -50,6 +56,8 @@ func RegisterRoutes(r chi.Router, memberHandler *MemberHandler, authHandler *Aut
 			r.Patch("/{id}", sessionHandler.Update)
 			r.Delete("/{id}", sessionHandler.Cancel)
 			r.Delete("/series/{id}", sessionHandler.StopSeries)
+			r.Post("/{id}/image", imageHandler.Upload)
+			r.Delete("/{id}/image", imageHandler.Delete)
 		})
 	})
 }

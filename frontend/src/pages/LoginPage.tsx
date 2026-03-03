@@ -36,14 +36,14 @@ export default function LoginPage() {
       <div className="flex min-h-screen items-center justify-center px-4">
         <div className="w-full max-w-sm text-center">
           <div className="mb-4 text-4xl">&#9993;</div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Check your email</h1>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100">Check your email</h1>
+          <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
             If <strong>{email}</strong> has been registered, we sent a magic link.
             If you don&apos;t receive one, ask your admin for access.
           </p>
           <button
             onClick={() => { setSent(false); setEmail(''); }}
-            className="mt-6 text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+            className="mt-6 text-sm font-medium text-amber-600 hover:text-amber-500 dark:text-amber-400"
           >
             Use a different email
           </button>
@@ -55,15 +55,15 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <h1 className="text-center text-2xl font-bold text-gray-900 dark:text-gray-100">
+        <h1 className="text-center text-2xl font-bold text-stone-900 dark:text-stone-100">
           Developer Space
         </h1>
-        <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+        <p className="mt-2 text-center text-sm text-stone-600 dark:text-stone-400">
           Sign in with your email address
         </p>
         <form onSubmit={handleSubmit} className="mt-8 space-y-4">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label htmlFor="email" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
               Email
             </label>
             <input
@@ -73,14 +73,14 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+              className="mt-1 block w-full rounded-md border border-stone-300 px-3 py-2 text-sm shadow-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
             />
           </div>
           {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-300 dark:disabled:bg-gray-700"
+            className="w-full rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-700 focus:ring-2 focus:ring-amber-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-stone-300 dark:disabled:bg-stone-700"
           >
             {submitting ? 'Sending...' : 'Send magic link'}
           </button>

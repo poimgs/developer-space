@@ -11,8 +11,8 @@ function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
       to={to}
       className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
         active
-          ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-          : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+          ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+          : 'text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800'
       }`}
     >
       {children}
@@ -26,10 +26,10 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen">
-      <nav className="border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
+      <nav className="border-b border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
           <div className="flex items-center gap-4">
-            <Link to="/" className="text-lg font-bold text-gray-900 dark:text-gray-100">
+            <Link to="/" className="text-lg font-bold text-stone-900 dark:text-stone-100">
               Developer Space
             </Link>
             <div className="hidden items-center gap-1 md:flex">
@@ -43,7 +43,7 @@ export default function Layout() {
             <NavLink to="/profile">Profile</NavLink>
             <button
               onClick={logout}
-              className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+              className="rounded-md px-3 py-2 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800"
             >
               Logout
             </button>
@@ -52,7 +52,7 @@ export default function Layout() {
           {/* Mobile hamburger */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="rounded-md p-2 text-gray-500 hover:bg-gray-100 md:hidden dark:text-gray-400 dark:hover:bg-gray-800"
+            className="rounded-md p-2 text-stone-500 hover:bg-stone-100 md:hidden dark:text-stone-400 dark:hover:bg-stone-800"
             aria-label="Toggle menu"
           >
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -67,25 +67,25 @@ export default function Layout() {
 
         {/* Mobile menu overlay */}
         {menuOpen && (
-          <div className="border-t border-gray-200 px-4 py-3 space-y-1 md:hidden dark:border-gray-700">
-            <Link to="/" onClick={() => setMenuOpen(false)} className="block rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800">
+          <div className="border-t border-stone-200 px-4 py-3 space-y-1 md:hidden dark:border-stone-700">
+            <Link to="/" onClick={() => setMenuOpen(false)} className="block rounded-md px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800">
               Sessions
             </Link>
             {user?.is_admin && (
-              <Link to="/members" onClick={() => setMenuOpen(false)} className="block rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800">
+              <Link to="/members" onClick={() => setMenuOpen(false)} className="block rounded-md px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800">
                 Members
               </Link>
             )}
-            <Link to="/profile" onClick={() => setMenuOpen(false)} className="block rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800">
+            <Link to="/profile" onClick={() => setMenuOpen(false)} className="block rounded-md px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800">
               Profile
             </Link>
             <div className="flex items-center justify-between px-3 py-2">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Theme</span>
+              <span className="text-sm text-stone-500 dark:text-stone-400">Theme</span>
               <ThemeToggle />
             </div>
             <button
               onClick={() => { setMenuOpen(false); logout(); }}
-              className="block w-full rounded-md px-3 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+              className="block w-full rounded-md px-3 py-2 text-left text-sm font-medium text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800"
             >
               Logout
             </button>

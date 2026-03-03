@@ -82,10 +82,10 @@ describe('ToastContext', () => {
     expect(screen.queryByText('Error!')).toBeNull(); // Gone at 5s
   });
 
-  it('defaults to info type with indigo border', () => {
+  it('defaults to info type with amber border', () => {
     renderWithToast();
     fireEvent.click(screen.getByText('Add Info'));
     const toast = screen.getByText('Info!').closest('div');
-    expect(toast?.className).toContain('border-indigo-500');
+    expect(toast?.className).toContain('border-amber-500');
   });
 });

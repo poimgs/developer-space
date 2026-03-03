@@ -17,16 +17,21 @@ A web application for managing a physical co-working space where developers coor
 
 ### Member
 
-| Field            | Type         | Constraints                        |
-|------------------|--------------|------------------------------------|
-| `id`             | UUID         | PK, generated                      |
-| `email`          | varchar(255) | UNIQUE, NOT NULL                   |
-| `name`           | varchar(255) | NOT NULL                           |
-| `telegram_handle`| varchar(255) | nullable                           |
-| `is_admin`       | boolean      | NOT NULL, default `false`          |
-| `is_active`      | boolean      | NOT NULL, default `true`           |
-| `created_at`     | timestamptz  | NOT NULL, default `now()`          |
-| `updated_at`     | timestamptz  | NOT NULL, default `now()`          |
+| Field              | Type         | Constraints                        |
+|--------------------|--------------|------------------------------------|
+| `id`               | UUID         | PK, generated                      |
+| `email`            | varchar(255) | UNIQUE, NOT NULL                   |
+| `name`             | varchar(255) | NOT NULL                           |
+| `telegram_handle`  | varchar(255) | nullable                           |
+| `bio`              | text         | nullable, max 500 chars (app-enforced) |
+| `skills`           | text[]       | default `'{}'`, max 10 tags (app-enforced) |
+| `linkedin_url`     | varchar(255) | nullable                           |
+| `instagram_handle` | varchar(255) | nullable                           |
+| `github_username`  | varchar(255) | nullable                           |
+| `is_admin`         | boolean      | NOT NULL, default `false`          |
+| `is_active`        | boolean      | NOT NULL, default `true`           |
+| `created_at`       | timestamptz  | NOT NULL, default `now()`          |
+| `updated_at`       | timestamptz  | NOT NULL, default `now()`          |
 
 ### SpaceSession
 
@@ -40,6 +45,8 @@ A web application for managing a physical co-working space where developers coor
 | `end_time`   | time         | NOT NULL                                 |
 | `capacity`   | integer      | NOT NULL, > 0                            |
 | `status`     | varchar(20)  | NOT NULL, default `scheduled` — enum: `scheduled`, `shifted`, `canceled` |
+| `image_url`  | varchar(512) | nullable, relative path to uploaded image |
+| `location`   | text         | nullable, free-form address              |
 | `created_by` | UUID         | FK → Member(id), NOT NULL                |
 | `created_at` | timestamptz  | NOT NULL, default `now()`                |
 | `updated_at` | timestamptz  | NOT NULL, default `now()`                |
@@ -121,5 +128,9 @@ See [specs/index.md](./index.md) for the full consolidated decision log with spe
 | Dark mode (class-based) | `darkMode: 'class'`, system preference detection + localStorage |
 | Recurring weekly sessions | Simple repeat: N independent sessions, `repeat_weekly` 0–12 |
 | Email notifications on cancel/reschedule | Resend emails to RSVPed members, fire-and-forget |
-| Member self-edit profile | `PATCH /api/auth/profile` — name + telegram only |
+| Member self-edit profile | `PATCH /api/auth/profile` — name, telegram, bio, skills, socials |
 | Optional invitation email | Checkbox on member creation, fire-and-forget via Resend |
+| Warm & inviting visual palette | Amber/gold (#F59E0B) accent, warm neutrals replacing cold grays |
+| Public member profiles | Any authenticated member can view others' profiles via `/profile/:id` |
+| Session images via file upload | Admins upload images (max 5MB JPEG/PNG/WebP), stored server-side |
+| Hero card + date strip sessions view | One session at a time with horizontal date picker for navigation |

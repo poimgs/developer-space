@@ -4,8 +4,9 @@ Admins create and manage SpaceSessions — scheduled timeslots when the co-worki
 
 ## User Stories
 
-- **As an admin**, I want to create a session with a date, time range, title, and capacity so members know when the space is open.
-- **As an admin**, I want to edit a session's details (date, time, title, description, capacity) to accommodate changes.
+- **As an admin**, I want to create a session with a date, time range, title, capacity, and optional location so members know when and where the space is open.
+- **As an admin**, I want to edit a session's details (date, time, title, description, capacity, location) to accommodate changes.
+- **As an admin**, I want to upload an image for a session so members can see what the space looks like.
 - **As an admin**, I want to cancel a session so members know it's no longer happening.
 - **As a member**, I want to view upcoming sessions so I can decide which to attend.
 - **As a member**, I want to see how many spots are left in a session so I know if there's room.
@@ -55,6 +56,7 @@ Request:
   "start_time": "14:00",
   "end_time": "18:00",
   "capacity": 8,
+  "location": "123 Main St, Suite 4B",                   // optional
   "repeat_weekly": 0              // optional, 0-12, default 0
 }
 
@@ -69,6 +71,8 @@ Request:
     "end_time": "18:00",
     "capacity": 8,
     "status": "scheduled",
+    "image_url": null,
+    "location": "123 Main St, Suite 4B",
     "rsvp_count": 0,
     "created_by": "uuid",
     "created_at": "2025-01-01T00:00:00Z",
@@ -79,9 +83,9 @@ Request:
 201 Created (recurring, repeat_weekly > 0 — returns array):
 {
   "data": [
-    { "id": "uuid-1", "date": "2025-02-14", "status": "scheduled", ... },
-    { "id": "uuid-2", "date": "2025-02-21", "status": "scheduled", ... },
-    { "id": "uuid-3", "date": "2025-02-28", "status": "scheduled", ... }
+    { "id": "uuid-1", "date": "2025-02-14", "status": "scheduled", "location": "123 Main St, Suite 4B", ... },
+    { "id": "uuid-2", "date": "2025-02-21", "status": "scheduled", "location": "123 Main St, Suite 4B", ... },
+    { "id": "uuid-3", "date": "2025-02-28", "status": "scheduled", "location": "123 Main St, Suite 4B", ... }
   ]
 }
 
@@ -109,6 +113,8 @@ Authorization: session cookie
       "end_time": "18:00",
       "capacity": 8,
       "status": "scheduled",
+      "image_url": "/uploads/sessions/uuid.jpg",
+      "location": "123 Main St, Suite 4B",
       "rsvp_count": 3,
       "created_by": "uuid",
       "created_at": "...",
@@ -132,7 +138,7 @@ GET /api/sessions/:id
 Authorization: session cookie
 
 200 OK:
-{ "data": { ...session with rsvp_count } }
+{ "data": { ...session with rsvp_count, image_url, location } }
 
 404 Not Found:
 { "error": "Session not found" }
@@ -147,7 +153,8 @@ Authorization: session cookie (admin)
 Request (partial — only changed fields):
 {
   "date": "2025-02-15",
-  "start_time": "15:00"
+  "start_time": "15:00",
+  "location": "456 Oak Ave, Floor 2"
 }
 
 200 OK:
@@ -186,6 +193,66 @@ Authorization: session cookie (admin)
 ```
 
 This is a soft delete — sets `status = 'canceled'`. The session record is preserved. A Telegram notification is sent.
+
+### Upload Session Image
+
+```
+POST /api/sessions/:id/image
+Authorization: session cookie (admin)
+Content-Type: multipart/form-data
+
+Form field: "image" — file upload (JPEG, PNG, or WebP, max 5MB)
+
+200 OK:
+{
+  "data": {
+    "image_url": "/uploads/sessions/uuid-timestamp.jpg"
+  }
+}
+
+413 Payload Too Large:
+{ "error": "Image must be less than 5MB" }
+
+422 Unprocessable Entity:
+{ "error": "Only JPEG, PNG, and WebP images are allowed" }
+
+404 Not Found:
+{ "error": "Session not found" }
+```
+
+**Backend logic:**
+1. Admin only. Validate file type (JPEG, PNG, WebP) and size (max 5MB).
+2. Generate a unique filename: `{session_id}-{timestamp}.{ext}`.
+3. Save file to `uploads/sessions/` directory on the server.
+4. Update the session's `image_url` field with the relative path.
+5. If the session previously had an image, delete the old file.
+6. Return the new `image_url`.
+
+### Delete Session Image
+
+```
+DELETE /api/sessions/:id/image
+Authorization: session cookie (admin)
+
+200 OK:
+{
+  "data": {
+    "image_url": null
+  }
+}
+
+404 Not Found:
+{ "error": "Session not found" }
+```
+
+**Backend logic:**
+1. Admin only. Find session by ID.
+2. If session has no image, return 200 with `image_url: null` (idempotent).
+3. Delete the file from `uploads/sessions/`.
+4. Set session's `image_url` to NULL.
+5. Return response.
+
+**Static file serving:** The backend serves files under `/uploads/` as static assets. In production (Docker), nginx handles this directly. In development, the Go server serves `uploads/` via `http.FileServer`.
 
 ## Recurring Sessions
 
@@ -227,8 +294,11 @@ The sessions list is the app's home page — there is no separate dashboard.
 
 Each session is rendered as a card (per card pattern from [09](./09-design-patterns.md#card-pattern)):
 
+- **Image** (optional): If `image_url` is set, display as a header image above the card content (full-width, `object-cover`, `h-40 rounded-t-xl`). If no image, card starts with the title row.
 - **Title** (left) + **status badge** (right of title, per [status badge pattern](./09-design-patterns.md#status-badges-colored-pills)).
 - **Below title:** date + time range line (e.g., "14:00 – 18:00").
+- **Location** (optional): If set, display with a map pin icon below the time range.
+- **Description** (optional): Truncated to 2 lines on cards, full text on detail page.
 - **Capacity display:** "3/8 spots" (or "Full" at capacity).
 - **RSVP action button:** see [04-rsvp.md](./04-rsvp.md) for button states.
 - **Admin-only actions:** edit (pencil icon) and cancel (X icon) buttons.
@@ -237,10 +307,12 @@ Each session is rendered as a card (per card pattern from [09](./09-design-patte
 ### Session Detail Page (`/sessions/:id`)
 
 Full session information:
-- Title, description, date, time range, capacity, status badge.
+- **Image** (optional): If `image_url` is set, display as a large hero image at the top (`w-full object-cover h-64 rounded-xl`).
+- Title, description (full text), date, time range, capacity, status badge.
+- **Location** (optional): If set, display with a map pin icon.
 - RSVP button (per [04-rsvp.md](./04-rsvp.md)).
-- Guest list below (per [04-rsvp.md](./04-rsvp.md#guest-list)).
-- **Admin actions:** "Edit" opens the session form pre-populated. "Cancel Session" opens the cancel confirmation modal.
+- Guest list below (per [04-rsvp.md](./04-rsvp.md#guest-list)). Each attendee name links to their public profile (`/profile/:id`).
+- **Admin actions:** "Edit" opens the session form pre-populated. "Cancel Session" opens the cancel confirmation modal. "Upload Image" button opens [ImageUpload](./09-design-patterns.md#imageupload) component.
 
 ### Session Form (Create / Edit)
 
@@ -253,6 +325,7 @@ Follows [form patterns](./09-design-patterns.md#form-patterns) from 09.
 - Start time (required, time input)
 - End time (required, time input)
 - Capacity (required, number input, min 1)
+- Location (optional, text input with map pin icon)
 
 **Recurring toggle (create only):**
 - "Repeat weekly" checkbox. When checked, reveals a "for N weeks" number input (1–12).
@@ -282,3 +355,5 @@ Per [empty state pattern](./09-design-patterns.md#empty-states) from 09.
 - Status is an application-level enum stored as varchar. Validate on write.
 - Recurring session creation should use a single transaction wrapping all INSERTs.
 - `repeat_weekly` is validated (0–12) in the service layer before any database operations.
+- Image uploads are stored in `uploads/sessions/` relative to the working directory. In Docker, this directory is bind-mounted as a volume for persistence.
+- The Go server registers a `FileServer` handler for `/uploads/` to serve static files in development. In production, nginx serves this path directly (see [07-deployment.md](./07-deployment.md)).

@@ -8,6 +8,10 @@ vendor/
 # Frontend
 frontend/node_modules/
 frontend/dist/
+node_modules/
+
+# Uploads
+uploads/
 
 # IDE
 .idea/

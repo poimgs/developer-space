@@ -24,6 +24,7 @@ type MemberRepo interface {
 	Create(ctx context.Context, req model.CreateMemberRequest) (*model.Member, error)
 	List(ctx context.Context, activeFilter string) ([]model.Member, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*model.Member, error)
+	GetByIDPublic(ctx context.Context, id uuid.UUID) (*model.PublicMember, error)
 	GetByEmail(ctx context.Context, email string) (*model.Member, error)
 	Update(ctx context.Context, id uuid.UUID, req model.UpdateMemberRequest) (*model.Member, error)
 	Delete(ctx context.Context, id uuid.UUID) error

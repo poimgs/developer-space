@@ -134,6 +134,16 @@ func (m *mockSessionRepo) GetRSVPCount(ctx context.Context, sessionID uuid.UUID)
 	return m.rsvpCounts[sessionID], nil
 }
 
+func (m *mockSessionRepo) UpdateImageURL(ctx context.Context, id uuid.UUID, imageURL *string) (*model.SpaceSession, error) {
+	s, ok := m.sessions[id]
+	if !ok {
+		return nil, nil
+	}
+	s.ImageURL = imageURL
+	s.UpdatedAt = time.Now()
+	return s, nil
+}
+
 // addSession adds a session to the mock repo and returns it.
 func (m *mockSessionRepo) addSession(title, date, startTime, endTime, status string, capacity int) *model.SpaceSession {
 	s := &model.SpaceSession{

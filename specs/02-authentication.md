@@ -10,7 +10,8 @@ See [01-member-management.md](./01-member-management.md) for how members are cre
 - **As a member**, I want to stay logged in across browser sessions so I don't have to re-authenticate frequently.
 - **As a member**, I want to log out explicitly when I choose.
 - **As a member**, I want to see my own profile information once logged in.
-- **As a member**, I want to edit my name and Telegram handle so I can keep my profile accurate without asking an admin.
+- **As a member**, I want to edit my name, Telegram handle, bio, skills, and social links so I can keep my profile accurate without asking an admin.
+- **As a member**, I want to view other members' profiles so I can learn about my co-working peers.
 
 ## Acceptance Criteria
 
@@ -109,6 +110,11 @@ Authorization: session cookie
     "email": "dev@example.com",
     "name": "Jane Doe",
     "telegram_handle": "janedoe",
+    "bio": "Full-stack dev who loves Go and React",
+    "skills": ["Go", "React", "PostgreSQL"],
+    "linkedin_url": "https://linkedin.com/in/janedoe",
+    "instagram_handle": "janedoe",
+    "github_username": "janedoe",
     "is_admin": false
   }
 }
@@ -136,7 +142,12 @@ Authorization: session cookie
 Request (partial update — only include fields to change):
 {
   "name": "Jane Smith",
-  "telegram_handle": "janesmith"
+  "telegram_handle": "janesmith",
+  "bio": "Full-stack dev who loves Go and React",
+  "skills": ["Go", "React", "PostgreSQL"],
+  "linkedin_url": "https://linkedin.com/in/janesmith",
+  "instagram_handle": "janesmith",
+  "github_username": "janesmith"
 }
 
 200 OK:
@@ -146,6 +157,11 @@ Request (partial update — only include fields to change):
     "email": "dev@example.com",
     "name": "Jane Smith",
     "telegram_handle": "janesmith",
+    "bio": "Full-stack dev who loves Go and React",
+    "skills": ["Go", "React", "PostgreSQL"],
+    "linkedin_url": "https://linkedin.com/in/janesmith",
+    "instagram_handle": "janesmith",
+    "github_username": "janesmith",
     "is_admin": false
   }
 }
@@ -155,10 +171,44 @@ Request (partial update — only include fields to change):
 ```
 
 **Backend logic:**
-1. Only `name` and `telegram_handle` are accepted. All other fields (email, is_admin, is_active) are ignored.
+1. Accepted fields: `name`, `telegram_handle`, `bio`, `skills`, `linkedin_url`, `instagram_handle`, `github_username`. All other fields (email, is_admin, is_active) are ignored.
 2. `name` cannot be empty — return 422 if an empty string is provided.
 3. `telegram_handle` strips leading `@` on input (same as admin member update).
-4. Returns the updated profile in the same format as `GET /api/auth/me`.
+4. `bio` max 500 characters — return 422 if exceeded.
+5. `skills` max 10 tags — return 422 if exceeded. Each tag is trimmed and lowercased.
+6. `linkedin_url` if provided must be a valid URL starting with `https://linkedin.com/` or `https://www.linkedin.com/` — return 422 if invalid.
+7. `instagram_handle` strips leading `@` on input.
+8. `github_username` strips leading `@` on input.
+9. Returns the updated profile in the same format as `GET /api/auth/me`.
+
+### Get Member Profile (Public)
+
+```
+GET /api/profiles/:id
+Authorization: session cookie
+
+200 OK:
+{
+  "data": {
+    "id": "uuid",
+    "name": "Jane Doe",
+    "telegram_handle": "janedoe",
+    "bio": "Full-stack dev who loves Go and React",
+    "skills": ["Go", "React", "PostgreSQL"],
+    "linkedin_url": "https://linkedin.com/in/janedoe",
+    "instagram_handle": "janedoe",
+    "github_username": "janedoe"
+  }
+}
+
+404 Not Found:
+{ "error": "Member not found" }
+```
+
+**Backend logic:**
+1. Any authenticated member can view any other active member's profile.
+2. Returns a subset of member fields — excludes `email`, `is_admin`, `is_active`, timestamps.
+3. Inactive members return 404 (not visible to other members).
 
 ### Route Structure
 
@@ -168,6 +218,7 @@ GET  /api/auth/verify          [public]
 POST /api/auth/logout          [auth required]
 GET  /api/auth/me              [auth required]
 PATCH /api/auth/profile        [auth required]
+GET  /api/profiles/:id         [auth required]
 ```
 
 ## UI Design
@@ -192,13 +243,35 @@ Centered card layout with app title at the top.
 
 ### Profile Page (`/profile`)
 
-Simple inline form — not a modal.
+Inline form — not a modal. Organized into sections.
 
-- **Fields:** Name (required), Telegram Handle (optional, with `@` prefix hint).
+- **Identity section:**
+  - Name (required, text input)
+  - Telegram Handle (optional, text input with `@` prefix hint)
+
+- **About section:**
+  - Bio (optional, textarea, max 500 chars, character counter)
+  - Skills (optional, [TagInput](./09-design-patterns.md#taginput) component, max 10 tags)
+
+- **Social links section:**
+  - LinkedIn URL (optional, text input with URL validation hint)
+  - Instagram Handle (optional, text input with `@` prefix hint)
+  - GitHub Username (optional, text input)
+
 - Pre-populated from `GET /api/auth/me` on page load.
 - "Save" button → `PATCH /api/auth/profile` → success toast "Profile updated."
 - Follows [form patterns](./09-design-patterns.md#form-patterns) from 09.
-- Members can only edit their own name and telegram handle. Email and admin status are read-only (shown as plain text, not editable).
+- Members can only edit the fields listed above. Email and admin status are read-only (shown as plain text, not editable).
+
+### Public Profile Page (`/profile/:id`)
+
+Read-only view of another member's profile, accessible to any authenticated member.
+
+- Fetches data from `GET /api/profiles/:id`.
+- **Displays:** Name (heading), bio, skills tags (read-only pills), social links (clickable icons/links for LinkedIn, Instagram, GitHub), Telegram handle.
+- **Layout:** Centered card, similar to session detail page styling.
+- **404 handling:** If member not found or inactive, show "Member not found" message with a back link.
+- **Self-view:** If the member views their own profile ID, show a link/button to go to the editable `/profile` page.
 
 ### User Menu (Navbar)
 
@@ -215,6 +288,8 @@ Dropdown triggered by clicking the member's name in the top navbar.
 - After submission: "Check your email for a login link" message.
 - `/auth/verify?token=...` page: calls the verify endpoint, shows a spinner, then redirects or shows an error.
 - Authenticated users see a user menu with their name and a "Log out" action.
+- `/profile` page: sectioned form (identity, about, social links) for self-edit.
+- `/profile/:id` page: read-only card view of another member's public profile.
 
 ## Security Notes
 

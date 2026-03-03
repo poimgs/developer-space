@@ -29,6 +29,7 @@ type SessionRepo interface {
 	Update(ctx context.Context, id uuid.UUID, req model.UpdateSessionRequest, newStatus *string) (*model.SpaceSession, error)
 	Cancel(ctx context.Context, id uuid.UUID) (*model.SpaceSession, error)
 	GetRSVPCount(ctx context.Context, sessionID uuid.UUID) (int, error)
+	UpdateImageURL(ctx context.Context, id uuid.UUID, imageURL *string) (*model.SpaceSession, error)
 }
 
 // SeriesRepo defines the data access interface for session series.
@@ -93,6 +94,7 @@ func (s *SessionService) createRecurring(ctx context.Context, req model.CreateSe
 			StartTime:   req.StartTime,
 			EndTime:     req.EndTime,
 			Capacity:    req.Capacity,
+			Location:    req.Location,
 		}
 		reqs = append(reqs, sessionReq)
 	}
@@ -409,4 +411,51 @@ func (s *SessionService) validateUpdate(req model.UpdateSessionRequest, existing
 		return &ValidationError{Details: details}
 	}
 	return nil
+}
+
+func (s *SessionService) UpdateImageURL(ctx context.Context, id uuid.UUID, imageURL string) (*model.SpaceSession, error) {
+	session, err := s.repo.GetByID(ctx, id, nil)
+	if err != nil {
+		return nil, fmt.Errorf("getting session: %w", err)
+	}
+	if session == nil {
+		return nil, ErrSessionNotFound
+	}
+
+	updated, err := s.repo.UpdateImageURL(ctx, id, &imageURL)
+	if err != nil {
+		return nil, fmt.Errorf("updating image url: %w", err)
+	}
+	return updated, nil
+}
+
+func (s *SessionService) ClearImageURL(ctx context.Context, id uuid.UUID) (*model.SpaceSession, error) {
+	session, err := s.repo.GetByID(ctx, id, nil)
+	if err != nil {
+		return nil, fmt.Errorf("getting session: %w", err)
+	}
+	if session == nil {
+		return nil, ErrSessionNotFound
+	}
+
+	updated, err := s.repo.UpdateImageURL(ctx, id, nil)
+	if err != nil {
+		return nil, fmt.Errorf("clearing image url: %w", err)
+	}
+	return updated, nil
+}
+
+// GetImageURL returns the current image URL for a session, or empty string if none.
+func (s *SessionService) GetImageURL(ctx context.Context, id uuid.UUID) (string, error) {
+	session, err := s.repo.GetByID(ctx, id, nil)
+	if err != nil {
+		return "", fmt.Errorf("getting session: %w", err)
+	}
+	if session == nil {
+		return "", ErrSessionNotFound
+	}
+	if session.ImageURL != nil {
+		return *session.ImageURL, nil
+	}
+	return "", nil
 }

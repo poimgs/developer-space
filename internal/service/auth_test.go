@@ -113,6 +113,25 @@ func (m *mockAuthMemberRepo) GetByEmail(ctx context.Context, email string) (*mod
 	}
 	return member, nil
 }
+func (m *mockAuthMemberRepo) GetByIDPublic(ctx context.Context, id uuid.UUID) (*model.PublicMember, error) {
+	member, ok := m.members[id]
+	if !ok {
+		return nil, nil
+	}
+	if !member.IsActive {
+		return nil, nil
+	}
+	return &model.PublicMember{
+		ID:              member.ID,
+		Name:            member.Name,
+		TelegramHandle:  member.TelegramHandle,
+		Bio:             member.Bio,
+		Skills:          member.Skills,
+		LinkedinURL:     member.LinkedinURL,
+		InstagramHandle: member.InstagramHandle,
+		GithubUsername:  member.GithubUsername,
+	}, nil
+}
 func (m *mockAuthMemberRepo) Update(ctx context.Context, id uuid.UUID, req model.UpdateMemberRequest) (*model.Member, error) {
 	member, ok := m.members[id]
 	if !ok {
@@ -123,6 +142,21 @@ func (m *mockAuthMemberRepo) Update(ctx context.Context, id uuid.UUID, req model
 	}
 	if req.TelegramHandle != nil {
 		member.TelegramHandle = req.TelegramHandle
+	}
+	if req.Bio != nil {
+		member.Bio = req.Bio
+	}
+	if req.Skills != nil {
+		member.Skills = req.Skills
+	}
+	if req.LinkedinURL != nil {
+		member.LinkedinURL = req.LinkedinURL
+	}
+	if req.InstagramHandle != nil {
+		member.InstagramHandle = req.InstagramHandle
+	}
+	if req.GithubUsername != nil {
+		member.GithubUsername = req.GithubUsername
 	}
 	return member, nil
 }
@@ -429,7 +463,7 @@ func TestUpdateProfile_ValidName(t *testing.T) {
 	memberRepo.addMember(member)
 
 	name := "Jane Smith"
-	updated, err := svc.UpdateProfile(context.Background(), memberID, &name, nil)
+	updated, err := svc.UpdateProfile(context.Background(), memberID, ProfileUpdateInput{Name: &name})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -445,7 +479,7 @@ func TestUpdateProfile_EmptyName(t *testing.T) {
 	memberRepo.addMember(&model.Member{ID: memberID, Email: "jane@example.com", Name: "Jane", IsActive: true})
 
 	name := ""
-	_, err := svc.UpdateProfile(context.Background(), memberID, &name, nil)
+	_, err := svc.UpdateProfile(context.Background(), memberID, ProfileUpdateInput{Name: &name})
 	var ve *ValidationError
 	if err == nil {
 		t.Fatal("expected error for empty name")
@@ -465,12 +499,270 @@ func TestUpdateProfile_StripTelegramAt(t *testing.T) {
 	memberRepo.addMember(&model.Member{ID: memberID, Email: "jane@example.com", Name: "Jane", IsActive: true})
 
 	handle := "@janedoe"
-	updated, err := svc.UpdateProfile(context.Background(), memberID, nil, &handle)
+	updated, err := svc.UpdateProfile(context.Background(), memberID, ProfileUpdateInput{TelegramHandle: &handle})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if updated.TelegramHandle == nil || *updated.TelegramHandle != "janedoe" {
 		t.Error("expected telegram handle 'janedoe' with @ stripped")
+	}
+}
+
+func TestUpdateProfile_Bio(t *testing.T) {
+	svc, _, memberRepo, _ := newTestAuthService()
+
+	memberID := uuid.New()
+	memberRepo.addMember(&model.Member{ID: memberID, Email: "jane@example.com", Name: "Jane", IsActive: true})
+
+	bio := "I'm a software developer who loves Go."
+	updated, err := svc.UpdateProfile(context.Background(), memberID, ProfileUpdateInput{Bio: &bio})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if updated.Bio == nil || *updated.Bio != bio {
+		t.Errorf("expected bio %q, got %v", bio, updated.Bio)
+	}
+}
+
+func TestUpdateProfile_BioTooLong(t *testing.T) {
+	svc, _, memberRepo, _ := newTestAuthService()
+
+	memberID := uuid.New()
+	memberRepo.addMember(&model.Member{ID: memberID, Email: "jane@example.com", Name: "Jane", IsActive: true})
+
+	// Create a 501-char string
+	bio := ""
+	for i := 0; i < 501; i++ {
+		bio += "a"
+	}
+	_, err := svc.UpdateProfile(context.Background(), memberID, ProfileUpdateInput{Bio: &bio})
+	var ve *ValidationError
+	if err == nil {
+		t.Fatal("expected error for bio > 500 chars")
+	}
+	if !isValidationError(err, &ve) {
+		t.Fatalf("expected ValidationError, got %T: %v", err, err)
+	}
+	if ve.Details["bio"] != "must be 500 characters or fewer" {
+		t.Errorf("expected bio validation message, got %s", ve.Details["bio"])
+	}
+}
+
+func TestUpdateProfile_Skills(t *testing.T) {
+	svc, _, memberRepo, _ := newTestAuthService()
+
+	memberID := uuid.New()
+	memberRepo.addMember(&model.Member{ID: memberID, Email: "jane@example.com", Name: "Jane", IsActive: true})
+
+	skills := []string{" Go ", "REACT", "TypeScript"}
+	updated, err := svc.UpdateProfile(context.Background(), memberID, ProfileUpdateInput{Skills: skills})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	// Should be trimmed and lowercased
+	if len(updated.Skills) != 3 {
+		t.Fatalf("expected 3 skills, got %d", len(updated.Skills))
+	}
+	if updated.Skills[0] != "go" {
+		t.Errorf("expected 'go', got %q", updated.Skills[0])
+	}
+	if updated.Skills[1] != "react" {
+		t.Errorf("expected 'react', got %q", updated.Skills[1])
+	}
+}
+
+func TestUpdateProfile_SkillsTooMany(t *testing.T) {
+	svc, _, memberRepo, _ := newTestAuthService()
+
+	memberID := uuid.New()
+	memberRepo.addMember(&model.Member{ID: memberID, Email: "jane@example.com", Name: "Jane", IsActive: true})
+
+	skills := make([]string, 11)
+	for i := range skills {
+		skills[i] = fmt.Sprintf("skill%d", i)
+	}
+	_, err := svc.UpdateProfile(context.Background(), memberID, ProfileUpdateInput{Skills: skills})
+	var ve *ValidationError
+	if err == nil {
+		t.Fatal("expected error for skills > 10")
+	}
+	if !isValidationError(err, &ve) {
+		t.Fatalf("expected ValidationError, got %T: %v", err, err)
+	}
+	if ve.Details["skills"] != "maximum 10 tags allowed" {
+		t.Errorf("expected skills validation message, got %s", ve.Details["skills"])
+	}
+}
+
+func TestUpdateProfile_LinkedinURLValid(t *testing.T) {
+	svc, _, memberRepo, _ := newTestAuthService()
+
+	memberID := uuid.New()
+	memberRepo.addMember(&model.Member{ID: memberID, Email: "jane@example.com", Name: "Jane", IsActive: true})
+
+	url := "https://linkedin.com/in/janedoe"
+	updated, err := svc.UpdateProfile(context.Background(), memberID, ProfileUpdateInput{LinkedinURL: &url})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if updated.LinkedinURL == nil || *updated.LinkedinURL != url {
+		t.Errorf("expected linkedin_url %q, got %v", url, updated.LinkedinURL)
+	}
+}
+
+func TestUpdateProfile_LinkedinURLInvalid(t *testing.T) {
+	svc, _, memberRepo, _ := newTestAuthService()
+
+	memberID := uuid.New()
+	memberRepo.addMember(&model.Member{ID: memberID, Email: "jane@example.com", Name: "Jane", IsActive: true})
+
+	url := "not-a-url"
+	_, err := svc.UpdateProfile(context.Background(), memberID, ProfileUpdateInput{LinkedinURL: &url})
+	var ve *ValidationError
+	if err == nil {
+		t.Fatal("expected error for invalid linkedin_url")
+	}
+	if !isValidationError(err, &ve) {
+		t.Fatalf("expected ValidationError, got %T: %v", err, err)
+	}
+	if ve.Details["linkedin_url"] != "must be a valid URL" {
+		t.Errorf("expected linkedin_url validation message, got %s", ve.Details["linkedin_url"])
+	}
+}
+
+func TestUpdateProfile_StripInstagramAt(t *testing.T) {
+	svc, _, memberRepo, _ := newTestAuthService()
+
+	memberID := uuid.New()
+	memberRepo.addMember(&model.Member{ID: memberID, Email: "jane@example.com", Name: "Jane", IsActive: true})
+
+	handle := "@janedoe"
+	updated, err := svc.UpdateProfile(context.Background(), memberID, ProfileUpdateInput{InstagramHandle: &handle})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if updated.InstagramHandle == nil || *updated.InstagramHandle != "janedoe" {
+		t.Errorf("expected instagram handle 'janedoe', got %v", updated.InstagramHandle)
+	}
+}
+
+func TestUpdateProfile_StripGithubAt(t *testing.T) {
+	svc, _, memberRepo, _ := newTestAuthService()
+
+	memberID := uuid.New()
+	memberRepo.addMember(&model.Member{ID: memberID, Email: "jane@example.com", Name: "Jane", IsActive: true})
+
+	username := "@janedoe"
+	updated, err := svc.UpdateProfile(context.Background(), memberID, ProfileUpdateInput{GithubUsername: &username})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if updated.GithubUsername == nil || *updated.GithubUsername != "janedoe" {
+		t.Errorf("expected github username 'janedoe', got %v", updated.GithubUsername)
+	}
+}
+
+func TestUpdateProfile_AllFieldsTogether(t *testing.T) {
+	svc, _, memberRepo, _ := newTestAuthService()
+
+	memberID := uuid.New()
+	memberRepo.addMember(&model.Member{ID: memberID, Email: "jane@example.com", Name: "Jane Doe", IsActive: true})
+
+	name := "Jane Smith"
+	telegram := "@janesmith"
+	bio := "Developer and writer"
+	skills := []string{"Go", "React"}
+	linkedin := "https://linkedin.com/in/janesmith"
+	instagram := "@jane_ig"
+	github := "@janegh"
+
+	updated, err := svc.UpdateProfile(context.Background(), memberID, ProfileUpdateInput{
+		Name:            &name,
+		TelegramHandle:  &telegram,
+		Bio:             &bio,
+		Skills:          skills,
+		LinkedinURL:     &linkedin,
+		InstagramHandle: &instagram,
+		GithubUsername:  &github,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if updated.Name != "Jane Smith" {
+		t.Errorf("expected name 'Jane Smith', got %s", updated.Name)
+	}
+	if updated.TelegramHandle == nil || *updated.TelegramHandle != "janesmith" {
+		t.Errorf("expected telegram 'janesmith', got %v", updated.TelegramHandle)
+	}
+	if updated.Bio == nil || *updated.Bio != "Developer and writer" {
+		t.Errorf("expected bio, got %v", updated.Bio)
+	}
+	if len(updated.Skills) != 2 || updated.Skills[0] != "go" {
+		t.Errorf("expected lowercase skills, got %v", updated.Skills)
+	}
+	if updated.LinkedinURL == nil || *updated.LinkedinURL != linkedin {
+		t.Errorf("expected linkedin URL, got %v", updated.LinkedinURL)
+	}
+	if updated.InstagramHandle == nil || *updated.InstagramHandle != "jane_ig" {
+		t.Errorf("expected instagram 'jane_ig', got %v", updated.InstagramHandle)
+	}
+	if updated.GithubUsername == nil || *updated.GithubUsername != "janegh" {
+		t.Errorf("expected github 'janegh', got %v", updated.GithubUsername)
+	}
+}
+
+func TestGetPublicProfile_Found(t *testing.T) {
+	svc, _, memberRepo, _ := newTestAuthService()
+
+	memberID := uuid.New()
+	bio := "Hello world"
+	memberRepo.addMember(&model.Member{
+		ID:       memberID,
+		Email:    "jane@example.com",
+		Name:     "Jane Doe",
+		IsActive: true,
+		Bio:      &bio,
+		Skills:   []string{"go", "react"},
+	})
+
+	profile, err := svc.GetPublicProfile(context.Background(), memberID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if profile.ID != memberID {
+		t.Errorf("expected ID %s, got %s", memberID, profile.ID)
+	}
+	if profile.Name != "Jane Doe" {
+		t.Errorf("expected name 'Jane Doe', got %s", profile.Name)
+	}
+	if profile.Bio == nil || *profile.Bio != "Hello world" {
+		t.Errorf("expected bio 'Hello world', got %v", profile.Bio)
+	}
+}
+
+func TestGetPublicProfile_NotFound(t *testing.T) {
+	svc, _, _, _ := newTestAuthService()
+
+	_, err := svc.GetPublicProfile(context.Background(), uuid.New())
+	if err != ErrNotFound {
+		t.Fatalf("expected ErrNotFound, got %v", err)
+	}
+}
+
+func TestGetPublicProfile_InactiveMember(t *testing.T) {
+	svc, _, memberRepo, _ := newTestAuthService()
+
+	memberID := uuid.New()
+	memberRepo.addMember(&model.Member{
+		ID:       memberID,
+		Email:    "inactive@example.com",
+		Name:     "Inactive",
+		IsActive: false,
+	})
+
+	_, err := svc.GetPublicProfile(context.Background(), memberID)
+	if err != ErrNotFound {
+		t.Fatalf("expected ErrNotFound for inactive member, got %v", err)
 	}
 }
 

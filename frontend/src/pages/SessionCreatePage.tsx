@@ -31,8 +31,8 @@ export default function SessionCreatePage() {
 
   return (
     <div className="mx-auto max-w-xl">
-      <h1 className="mb-6 text-2xl font-bold text-gray-900 dark:text-gray-100">Create Session</h1>
-      <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+      <h1 className="mb-6 text-2xl font-bold text-stone-900 dark:text-stone-100">Create Session</h1>
+      <div className="rounded-xl border border-stone-200 bg-white p-6 dark:border-stone-700 dark:bg-stone-800">
         <SessionForm
           onSubmit={async (data) => {
             await mutation.mutateAsync(data as CreateSessionRequest);

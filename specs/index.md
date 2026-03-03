@@ -14,7 +14,7 @@ Table of contents, consolidated decision log, and cross-reference map for the co
 | 05 | [05-telegram-notifications.md](./05-telegram-notifications.md) | Notifications (Telegram + Email) | Telegram broadcast, email to RSVPed members on cancel/reschedule |
 | 06 | [06-cross-cutting-concerns.md](./06-cross-cutting-concerns.md) | Cross-Cutting Concerns | Middleware, API conventions, config, rate limiting |
 | 07 | [07-deployment.md](./07-deployment.md) | Deployment | Docker Compose, migrations, seeding, production notes |
-| 08 | [08-ui-ux.md](./08-ui-ux.md) | UI/UX: App Structure & Workflows | Page inventory, navigation, 8 user workflow descriptions |
+| 08 | [08-ui-ux.md](./08-ui-ux.md) | UI/UX: App Structure & Workflows | Page inventory, navigation, 10 user workflow descriptions |
 | 09 | [09-design-patterns.md](./09-design-patterns.md) | Design Patterns | Color system, dark mode, responsive breakpoints, shared components |
 
 ## Decision Log
@@ -30,12 +30,12 @@ Table of contents, consolidated decision log, and cross-reference map for the co
 | 7 | Illustrated empty states | SVG icon + heading + CTA button; guides users to next action | 09 |
 | 8 | Toast notifications for feedback | Auto-dismiss 3–5s; non-blocking, ephemeral feedback pattern | 09 |
 | 9 | Modal dialogs for destructive actions | Confirmation required for cancel session, delete member, cancel RSVP | 09 |
-| 10 | Neutral palette + indigo accent | Professional, accessible; indigo provides strong contrast in light/dark modes | 09 |
+| 10 | Warm palette + amber/gold accent | Warm, inviting feel; amber (#F59E0B) + stone neutrals replacing cold indigo + gray | 09 |
 | 11 | Dark mode (class-based + system pref) | Tailwind `darkMode: 'class'`, localStorage override, system preference fallback | 09 |
 | 12 | Top navbar with hamburger on mobile | Desktop: visible links; mobile: hamburger → slide-in overlay | 08 |
-| 13 | Simple profile page at `/profile` | Members edit name + telegram handle only; no complex settings | 02 |
+| 13 | Enhanced profile page at `/profile` | Members edit name, telegram, bio, skills, and social links (LinkedIn, Instagram, GitHub) | 02 |
 | 14 | Optional invitation email on member creation | `send_invite` checkbox (default unchecked); fire-and-forget via Resend | 01 |
-| 15 | Member self-edit via `PATCH /api/auth/profile` | Name + telegram only; email and admin status controlled by admins | 02 |
+| 15 | Member self-edit via `PATCH /api/auth/profile` | Name, telegram, bio, skills, socials; email and admin status controlled by admins | 02 |
 | 16 | Recurring sessions (simple weekly repeat) | `repeat_weekly` 0–12; creates N+1 independent sessions in one transaction | 03 |
 | 17 | Single summary Telegram message for recurring | One message listing all dates instead of N individual notifications | 05 |
 | 18 | Email notifications on cancel/reschedule | Resend emails to RSVPed members; reuses existing Resend integration | 05 |
@@ -47,6 +47,10 @@ Table of contents, consolidated decision log, and cross-reference map for the co
 | 24 | Feature-based specs (not layer-based) | Each spec is self-contained: stories, criteria, endpoints, UI design | 00 |
 | 25 | Resend for email delivery | Simple API, good developer experience, generous free tier | 00 |
 | 26 | API-first design | Every feature spec includes full endpoint contracts | 00 |
+| 27 | Enhanced member profiles | Bio, skills tags, social links (LinkedIn, Instagram, GitHub) on member records | 00, 02 |
+| 28 | Public member profiles | Any authenticated member can view others' profiles via `/profile/:id` | 02, 08 |
+| 29 | Session images via file upload | Admins upload images (max 5MB JPEG/PNG/WebP) stored server-side, displayed on cards | 00, 03 |
+| 30 | Hero card + date strip sessions view | One session at a time with horizontal date picker navigation replacing date-grouped list | 08, 09 |
 
 ## Cross-Reference Map
 

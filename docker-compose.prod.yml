@@ -25,6 +25,8 @@ services:
     environment:
       DATABASE_URL: host=postgres port=5432 user=coworkspace password=${POSTGRES_PASSWORD} dbname=coworkspace sslmode=disable
       FRONTEND_URL: https://${DOMAIN}
+    volumes:
+      - uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -34,6 +36,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.frontend
+    volumes:
+      - uploads:/app/uploads
     depends_on:
       - api
     restart: unless-stopped
@@ -55,5 +59,6 @@ services:
 
 volumes:
   pgdata:
+  uploads:
   caddy_data:
   caddy_config:
