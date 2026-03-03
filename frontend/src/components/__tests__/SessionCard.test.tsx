@@ -20,6 +20,7 @@ function makeSession(overrides: Partial<SpaceSession> = {}): SpaceSession {
     end_time: '18:00',
     capacity: 8,
     status: 'scheduled',
+    series_id: null,
     created_by: 'admin-1',
     created_at: '2026-03-01T00:00:00Z',
     updated_at: '2026-03-01T00:00:00Z',
@@ -46,7 +47,7 @@ describe('SessionCard', () => {
 
   it('renders spot count', () => {
     renderCard(makeSession({ rsvp_count: 3, capacity: 8 }));
-    expect(screen.getByText('3/8 spots')).toBeInTheDocument();
+    expect(screen.getByText('3/8')).toBeInTheDocument();
   });
 
   it('renders status badge', () => {

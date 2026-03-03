@@ -25,7 +25,7 @@ export default function SessionForm({ session, onSubmit, loading }: SessionFormP
   const [startTime, setStartTime] = useState(session?.start_time ?? '');
   const [endTime, setEndTime] = useState(session?.end_time ?? '');
   const [capacity, setCapacity] = useState(session?.capacity?.toString() ?? '');
-  const [repeatWeekly, setRepeatWeekly] = useState(false);
+  const [repeatMode, setRepeatMode] = useState<'none' | 'weekly' | 'forever'>('none');
   const [repeatCount, setRepeatCount] = useState(1);
   const [errors, setErrors] = useState<FormErrors>({});
 
@@ -40,7 +40,7 @@ export default function SessionForm({ session, onSubmit, loading }: SessionFormP
     }
     const cap = parseInt(capacity, 10);
     if (!capacity || isNaN(cap) || cap < 1) errs.capacity = 'Capacity must be at least 1';
-    if (!isEdit && repeatWeekly && (repeatCount < 1 || repeatCount > 12)) {
+    if (!isEdit && repeatMode === 'weekly' && (repeatCount < 1 || repeatCount > 12)) {
       errs.repeat_weekly = 'Repeat count must be between 1 and 12';
     }
     return errs;
@@ -74,7 +74,8 @@ export default function SessionForm({ session, onSubmit, loading }: SessionFormP
         capacity: parseInt(capacity, 10),
       };
       if (description.trim()) data.description = description.trim();
-      if (repeatWeekly) data.repeat_weekly = repeatCount;
+      if (repeatMode === 'weekly') data.repeat_weekly = repeatCount;
+      if (repeatMode === 'forever') data.repeat_forever = true;
       await onSubmit(data);
     }
   }
@@ -168,30 +169,53 @@ export default function SessionForm({ session, onSubmit, loading }: SessionFormP
 
       {!isEdit && (
         <div className="space-y-2">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={repeatWeekly}
-              onChange={(e) => setRepeatWeekly(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-            />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Repeat weekly</span>
-          </label>
-          {repeatWeekly && (
-            <div className="ml-6 flex items-center gap-2">
-              <span className="text-sm text-gray-600 dark:text-gray-400">for</span>
+          <span className="block text-sm font-medium text-gray-700 dark:text-gray-300">Repeat</span>
+          <div className="space-y-1">
+            <label className="flex items-center gap-2">
               <input
-                type="number"
-                min="1"
-                max="12"
-                value={repeatCount}
-                onChange={(e) => setRepeatCount(parseInt(e.target.value, 10) || 1)}
-                className="w-16 rounded-md border border-gray-300 px-2 py-1 text-sm text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                type="radio"
+                name="repeat"
+                checked={repeatMode === 'none'}
+                onChange={() => setRepeatMode('none')}
+                className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
               />
-              <span className="text-sm text-gray-600 dark:text-gray-400">weeks</span>
-              {errors.repeat_weekly && <p className="text-xs text-red-600 dark:text-red-400">{errors.repeat_weekly}</p>}
-            </div>
-          )}
+              <span className="text-sm text-gray-700 dark:text-gray-300">No repeat</span>
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="repeat"
+                checked={repeatMode === 'weekly'}
+                onChange={() => setRepeatMode('weekly')}
+                className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              <span className="text-sm text-gray-700 dark:text-gray-300">Repeat weekly for</span>
+            </label>
+            {repeatMode === 'weekly' && (
+              <div className="ml-6 flex items-center gap-2">
+                <input
+                  type="number"
+                  min="1"
+                  max="12"
+                  value={repeatCount}
+                  onChange={(e) => setRepeatCount(parseInt(e.target.value, 10) || 1)}
+                  className="w-16 rounded-md border border-gray-300 px-2 py-1 text-sm text-gray-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                />
+                <span className="text-sm text-gray-600 dark:text-gray-400">weeks</span>
+                {errors.repeat_weekly && <p className="text-xs text-red-600 dark:text-red-400">{errors.repeat_weekly}</p>}
+              </div>
+            )}
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="repeat"
+                checked={repeatMode === 'forever'}
+                onChange={() => setRepeatMode('forever')}
+                className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              <span className="text-sm text-gray-700 dark:text-gray-300">Repeat forever</span>
+            </label>
+          </div>
         </div>
       )}
 

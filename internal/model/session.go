@@ -15,6 +15,7 @@ type SpaceSession struct {
 	EndTime     string     `json:"end_time"`
 	Capacity    int        `json:"capacity"`
 	Status      string     `json:"status"`
+	SeriesID    *uuid.UUID `json:"series_id"`
 	CreatedBy   uuid.UUID  `json:"created_by"`
 	CreatedAt   time.Time  `json:"created_at"`
 	UpdatedAt   time.Time  `json:"updated_at"`
@@ -23,13 +24,15 @@ type SpaceSession struct {
 }
 
 type CreateSessionRequest struct {
-	Title        string  `json:"title"`
-	Description  *string `json:"description"`
-	Date         string  `json:"date"`
-	StartTime    string  `json:"start_time"`
-	EndTime      string  `json:"end_time"`
-	Capacity     int     `json:"capacity"`
-	RepeatWeekly int     `json:"repeat_weekly"`
+	Title         string     `json:"title"`
+	Description   *string    `json:"description"`
+	Date          string     `json:"date"`
+	StartTime     string     `json:"start_time"`
+	EndTime       string     `json:"end_time"`
+	Capacity      int        `json:"capacity"`
+	RepeatWeekly  int        `json:"repeat_weekly"`
+	RepeatForever bool       `json:"repeat_forever"`
+	SeriesID      *uuid.UUID `json:"-"`
 }
 
 type UpdateSessionRequest struct {

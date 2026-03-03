@@ -16,6 +16,8 @@ var (
 	ErrSessionCanceled    = errors.New("session is canceled")
 	ErrAlreadyCanceled    = errors.New("session is already canceled")
 	ErrCapacityBelowRSVPs = errors.New("cannot reduce capacity below current RSVP count")
+	ErrSeriesNotFound     = errors.New("series not found")
+	ErrSeriesInactive     = errors.New("series is already inactive")
 )
 
 // SessionRepo defines the data access interface for sessions.
@@ -29,8 +31,18 @@ type SessionRepo interface {
 	GetRSVPCount(ctx context.Context, sessionID uuid.UUID) (int, error)
 }
 
+// SeriesRepo defines the data access interface for session series.
+type SeriesRepo interface {
+	Create(ctx context.Context, series model.SessionSeries) (*model.SessionSeries, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*model.SessionSeries, error)
+	ListActive(ctx context.Context) ([]model.SessionSeries, error)
+	Deactivate(ctx context.Context, id uuid.UUID) error
+	GenerateSessions(ctx context.Context, series model.SessionSeries, fromDate, toDate time.Time) ([]model.SpaceSession, error)
+}
+
 type SessionService struct {
 	repo        SessionRepo
+	seriesRepo  SeriesRepo
 	notifier    Notifier
 	emailSender NotificationEmailSender
 	rsvpLister  RSVPMemberLister
@@ -40,12 +52,21 @@ func NewSessionService(repo SessionRepo, notifier Notifier) *SessionService {
 	return &SessionService{repo: repo, notifier: notifier}
 }
 
+// SetSeriesRepo configures the session service to support recurring series.
+func (s *SessionService) SetSeriesRepo(seriesRepo SeriesRepo) {
+	s.seriesRepo = seriesRepo
+}
+
 func (s *SessionService) Create(ctx context.Context, req model.CreateSessionRequest, createdBy uuid.UUID) (any, error) {
 	if err := s.validateCreate(req); err != nil {
 		return nil, err
 	}
 
-	// Recurring sessions
+	if req.RepeatForever {
+		return s.createSeries(ctx, req, createdBy)
+	}
+
+	// Recurring sessions (finite)
 	if req.RepeatWeekly > 0 {
 		return s.createRecurring(ctx, req, createdBy)
 	}
@@ -86,8 +107,88 @@ func (s *SessionService) createRecurring(ctx context.Context, req model.CreateSe
 	return sessions, nil
 }
 
+func (s *SessionService) createSeries(ctx context.Context, req model.CreateSessionRequest, createdBy uuid.UUID) ([]model.SpaceSession, error) {
+	baseDate, _ := time.Parse("2006-01-02", req.Date)
+	dayOfWeek := int(baseDate.Weekday())
+
+	series := model.SessionSeries{
+		Title:       req.Title,
+		Description: req.Description,
+		DayOfWeek:   dayOfWeek,
+		StartTime:   req.StartTime,
+		EndTime:     req.EndTime,
+		Capacity:    req.Capacity,
+		CreatedBy:   createdBy,
+	}
+
+	created, err := s.seriesRepo.Create(ctx, series)
+	if err != nil {
+		return nil, fmt.Errorf("creating session series: %w", err)
+	}
+
+	// Generate sessions for the next 8 weeks
+	toDate := baseDate.AddDate(0, 0, 8*7)
+	sessions, err := s.seriesRepo.GenerateSessions(ctx, *created, baseDate, toDate)
+	if err != nil {
+		return nil, fmt.Errorf("generating series sessions: %w", err)
+	}
+
+	go s.notifier.SessionsCreatedRecurring(sessions)
+
+	return sessions, nil
+}
+
 func (s *SessionService) List(ctx context.Context, from, to, status string, memberID *uuid.UUID) ([]model.SpaceSession, error) {
+	s.extendActiveSeries(ctx, to)
 	return s.repo.List(ctx, from, to, status, memberID)
+}
+
+// extendActiveSeries lazily generates sessions for all active series up to the given date.
+func (s *SessionService) extendActiveSeries(ctx context.Context, to string) {
+	if s.seriesRepo == nil {
+		return
+	}
+
+	activeSeries, err := s.seriesRepo.ListActive(ctx)
+	if err != nil {
+		return
+	}
+
+	today := time.Now().Truncate(24 * time.Hour)
+	var toDate time.Time
+	if to != "" {
+		toDate, err = time.Parse("2006-01-02", to)
+		if err != nil {
+			toDate = today.AddDate(0, 0, 28)
+		}
+	} else {
+		toDate = today.AddDate(0, 0, 28)
+	}
+	// Extend a week beyond the request to ensure coverage
+	toDate = toDate.AddDate(0, 0, 7)
+
+	for _, series := range activeSeries {
+		s.seriesRepo.GenerateSessions(ctx, series, today, toDate)
+	}
+}
+
+func (s *SessionService) StopSeries(ctx context.Context, seriesID uuid.UUID) error {
+	if s.seriesRepo == nil {
+		return ErrSeriesNotFound
+	}
+
+	series, err := s.seriesRepo.GetByID(ctx, seriesID)
+	if err != nil {
+		return fmt.Errorf("getting series: %w", err)
+	}
+	if series == nil {
+		return ErrSeriesNotFound
+	}
+	if !series.IsActive {
+		return ErrSeriesInactive
+	}
+
+	return s.seriesRepo.Deactivate(ctx, seriesID)
 }
 
 func (s *SessionService) GetByID(ctx context.Context, id uuid.UUID, memberID *uuid.UUID) (*model.SpaceSession, error) {
@@ -222,7 +323,9 @@ func (s *SessionService) validateCreate(req model.CreateSessionRequest) error {
 	if req.Capacity <= 0 {
 		details["capacity"] = "must be greater than 0"
 	}
-	if req.RepeatWeekly < 0 || req.RepeatWeekly > 12 {
+	if req.RepeatForever && req.RepeatWeekly > 0 {
+		details["repeat_weekly"] = "cannot use both repeat_weekly and repeat_forever"
+	} else if !req.RepeatForever && (req.RepeatWeekly < 0 || req.RepeatWeekly > 12) {
 		details["repeat_weekly"] = "must be between 0 and 12"
 	}
 

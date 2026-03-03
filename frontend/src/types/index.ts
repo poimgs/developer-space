@@ -33,6 +33,7 @@ export interface SpaceSession {
   end_time: string;
   capacity: number;
   status: 'scheduled' | 'shifted' | 'canceled';
+  series_id: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -48,6 +49,7 @@ export interface CreateSessionRequest {
   end_time: string;
   capacity: number;
   repeat_weekly?: number;
+  repeat_forever?: boolean;
 }
 
 export interface UpdateSessionRequest {

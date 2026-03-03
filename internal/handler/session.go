@@ -157,3 +157,28 @@ func (h *SessionHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 
 	response.JSON(w, http.StatusOK, session)
 }
+
+func (h *SessionHandler) StopSeries(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "Invalid series ID")
+		return
+	}
+
+	err = h.svc.StopSeries(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, service.ErrSeriesNotFound) {
+			response.Error(w, http.StatusNotFound, "Series not found")
+			return
+		}
+		if errors.Is(err, service.ErrSeriesInactive) {
+			response.Error(w, http.StatusUnprocessableEntity, "Series is already inactive")
+			return
+		}
+		slog.Error("failed to stop series", "error", err)
+		response.Error(w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	response.JSON(w, http.StatusOK, map[string]string{"status": "stopped"})
+}

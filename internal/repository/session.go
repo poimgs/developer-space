@@ -25,11 +25,11 @@ func NewSessionRepository(pool *pgxpool.Pool) *SessionRepository {
 func (r *SessionRepository) Create(ctx context.Context, req model.CreateSessionRequest, createdBy uuid.UUID) (*model.SpaceSession, error) {
 	var s model.SpaceSession
 	err := r.pool.QueryRow(ctx,
-		`INSERT INTO space_sessions (title, description, date, start_time, end_time, capacity, status, created_by)
-		 VALUES ($1, $2, $3, $4, $5, $6, 'scheduled', $7)
-		 RETURNING id, title, description, date::text, to_char(start_time, 'HH24:MI'), to_char(end_time, 'HH24:MI'), capacity, status, created_by, created_at, updated_at`,
-		req.Title, req.Description, req.Date, req.StartTime, req.EndTime, req.Capacity, createdBy,
-	).Scan(&s.ID, &s.Title, &s.Description, &s.Date, &s.StartTime, &s.EndTime, &s.Capacity, &s.Status, &s.CreatedBy, &s.CreatedAt, &s.UpdatedAt)
+		`INSERT INTO space_sessions (title, description, date, start_time, end_time, capacity, status, series_id, created_by)
+		 VALUES ($1, $2, $3, $4, $5, $6, 'scheduled', $7, $8)
+		 RETURNING id, title, description, date::text, to_char(start_time, 'HH24:MI'), to_char(end_time, 'HH24:MI'), capacity, status, series_id, created_by, created_at, updated_at`,
+		req.Title, req.Description, req.Date, req.StartTime, req.EndTime, req.Capacity, req.SeriesID, createdBy,
+	).Scan(&s.ID, &s.Title, &s.Description, &s.Date, &s.StartTime, &s.EndTime, &s.Capacity, &s.Status, &s.SeriesID, &s.CreatedBy, &s.CreatedAt, &s.UpdatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("inserting session: %w", err)
 	}
@@ -47,11 +47,11 @@ func (r *SessionRepository) CreateBatch(ctx context.Context, sessions []model.Cr
 	for _, req := range sessions {
 		var s model.SpaceSession
 		err := tx.QueryRow(ctx,
-			`INSERT INTO space_sessions (title, description, date, start_time, end_time, capacity, status, created_by)
-			 VALUES ($1, $2, $3, $4, $5, $6, 'scheduled', $7)
-			 RETURNING id, title, description, date::text, to_char(start_time, 'HH24:MI'), to_char(end_time, 'HH24:MI'), capacity, status, created_by, created_at, updated_at`,
-			req.Title, req.Description, req.Date, req.StartTime, req.EndTime, req.Capacity, createdBy,
-		).Scan(&s.ID, &s.Title, &s.Description, &s.Date, &s.StartTime, &s.EndTime, &s.Capacity, &s.Status, &s.CreatedBy, &s.CreatedAt, &s.UpdatedAt)
+			`INSERT INTO space_sessions (title, description, date, start_time, end_time, capacity, status, series_id, created_by)
+			 VALUES ($1, $2, $3, $4, $5, $6, 'scheduled', $7, $8)
+			 RETURNING id, title, description, date::text, to_char(start_time, 'HH24:MI'), to_char(end_time, 'HH24:MI'), capacity, status, series_id, created_by, created_at, updated_at`,
+			req.Title, req.Description, req.Date, req.StartTime, req.EndTime, req.Capacity, req.SeriesID, createdBy,
+		).Scan(&s.ID, &s.Title, &s.Description, &s.Date, &s.StartTime, &s.EndTime, &s.Capacity, &s.Status, &s.SeriesID, &s.CreatedBy, &s.CreatedAt, &s.UpdatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("inserting batch session: %w", err)
 		}
@@ -119,7 +119,7 @@ func (r *SessionRepository) List(ctx context.Context, from, to, status string, m
 
 	query := fmt.Sprintf(
 		`SELECT s.id, s.title, s.description, s.date::text, to_char(s.start_time, 'HH24:MI'), to_char(s.end_time, 'HH24:MI'), s.capacity, s.status,
-		        s.created_by, s.created_at, s.updated_at,
+		        s.series_id, s.created_by, s.created_at, s.updated_at,
 		        COALESCE(COUNT(r.id), 0) AS rsvp_count,
 		        EXISTS(SELECT 1 FROM rsvps WHERE session_id = s.id AND member_id = $1) AS user_rsvped
 		 FROM space_sessions s
@@ -138,7 +138,7 @@ func (r *SessionRepository) List(ctx context.Context, from, to, status string, m
 	var sessions []model.SpaceSession
 	for rows.Next() {
 		var s model.SpaceSession
-		if err := rows.Scan(&s.ID, &s.Title, &s.Description, &s.Date, &s.StartTime, &s.EndTime, &s.Capacity, &s.Status, &s.CreatedBy, &s.CreatedAt, &s.UpdatedAt, &s.RSVPCount, &s.UserRSVPed); err != nil {
+		if err := rows.Scan(&s.ID, &s.Title, &s.Description, &s.Date, &s.StartTime, &s.EndTime, &s.Capacity, &s.Status, &s.SeriesID, &s.CreatedBy, &s.CreatedAt, &s.UpdatedAt, &s.RSVPCount, &s.UserRSVPed); err != nil {
 			return nil, fmt.Errorf("scanning session: %w", err)
 		}
 		sessions = append(sessions, s)
@@ -162,14 +162,14 @@ func (r *SessionRepository) GetByID(ctx context.Context, id uuid.UUID, memberID 
 	var s model.SpaceSession
 	err := r.pool.QueryRow(ctx,
 		`SELECT s.id, s.title, s.description, s.date::text, to_char(s.start_time, 'HH24:MI'), to_char(s.end_time, 'HH24:MI'), s.capacity, s.status,
-		        s.created_by, s.created_at, s.updated_at,
+		        s.series_id, s.created_by, s.created_at, s.updated_at,
 		        COALESCE(COUNT(r.id), 0) AS rsvp_count,
 		        EXISTS(SELECT 1 FROM rsvps WHERE session_id = s.id AND member_id = $2) AS user_rsvped
 		 FROM space_sessions s
 		 LEFT JOIN rsvps r ON r.session_id = s.id
 		 WHERE s.id = $1
 		 GROUP BY s.id`, id, memberIDArg,
-	).Scan(&s.ID, &s.Title, &s.Description, &s.Date, &s.StartTime, &s.EndTime, &s.Capacity, &s.Status, &s.CreatedBy, &s.CreatedAt, &s.UpdatedAt, &s.RSVPCount, &s.UserRSVPed)
+	).Scan(&s.ID, &s.Title, &s.Description, &s.Date, &s.StartTime, &s.EndTime, &s.Capacity, &s.Status, &s.SeriesID, &s.CreatedBy, &s.CreatedAt, &s.UpdatedAt, &s.RSVPCount, &s.UserRSVPed)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
@@ -229,13 +229,13 @@ func (r *SessionRepository) Update(ctx context.Context, id uuid.UUID, req model.
 
 	query := fmt.Sprintf(
 		`UPDATE space_sessions SET %s WHERE id = $%d
-		 RETURNING id, title, description, date::text, to_char(start_time, 'HH24:MI'), to_char(end_time, 'HH24:MI'), capacity, status, created_by, created_at, updated_at`,
+		 RETURNING id, title, description, date::text, to_char(start_time, 'HH24:MI'), to_char(end_time, 'HH24:MI'), capacity, status, series_id, created_by, created_at, updated_at`,
 		strings.Join(setClauses, ", "), argIdx,
 	)
 
 	var s model.SpaceSession
 	err := r.pool.QueryRow(ctx, query, args...).Scan(
-		&s.ID, &s.Title, &s.Description, &s.Date, &s.StartTime, &s.EndTime, &s.Capacity, &s.Status, &s.CreatedBy, &s.CreatedAt, &s.UpdatedAt,
+		&s.ID, &s.Title, &s.Description, &s.Date, &s.StartTime, &s.EndTime, &s.Capacity, &s.Status, &s.SeriesID, &s.CreatedBy, &s.CreatedAt, &s.UpdatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -251,8 +251,8 @@ func (r *SessionRepository) Cancel(ctx context.Context, id uuid.UUID) (*model.Sp
 	err := r.pool.QueryRow(ctx,
 		`UPDATE space_sessions SET status = 'canceled', updated_at = now()
 		 WHERE id = $1
-		 RETURNING id, title, description, date::text, to_char(start_time, 'HH24:MI'), to_char(end_time, 'HH24:MI'), capacity, status, created_by, created_at, updated_at`, id,
-	).Scan(&s.ID, &s.Title, &s.Description, &s.Date, &s.StartTime, &s.EndTime, &s.Capacity, &s.Status, &s.CreatedBy, &s.CreatedAt, &s.UpdatedAt)
+		 RETURNING id, title, description, date::text, to_char(start_time, 'HH24:MI'), to_char(end_time, 'HH24:MI'), capacity, status, series_id, created_by, created_at, updated_at`, id,
+	).Scan(&s.ID, &s.Title, &s.Description, &s.Date, &s.StartTime, &s.EndTime, &s.Capacity, &s.Status, &s.SeriesID, &s.CreatedBy, &s.CreatedAt, &s.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil

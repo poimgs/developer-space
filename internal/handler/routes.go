@@ -49,6 +49,7 @@ func RegisterRoutes(r chi.Router, memberHandler *MemberHandler, authHandler *Aut
 			r.Post("/", sessionHandler.Create)
 			r.Patch("/{id}", sessionHandler.Update)
 			r.Delete("/{id}", sessionHandler.Cancel)
+			r.Delete("/series/{id}", sessionHandler.StopSeries)
 		})
 	})
 }

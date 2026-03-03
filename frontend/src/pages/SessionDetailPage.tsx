@@ -19,6 +19,7 @@ export default function SessionDetailPage() {
   const isAdmin = user?.is_admin ?? false;
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [cancelSessionOpen, setCancelSessionOpen] = useState(false);
+  const [stopSeriesOpen, setStopSeriesOpen] = useState(false);
 
   const { data: session, isLoading } = useQuery({
     queryKey: ['session', id],
@@ -79,6 +80,19 @@ export default function SessionDetailPage() {
     },
   });
 
+  const stopSeriesMutation = useMutation({
+    mutationFn: (seriesId: string) => api.delete(`/api/sessions/series/${seriesId}`),
+    onSuccess: () => {
+      addToast('Recurring series stopped. No new sessions will be generated.', 'success');
+      queryClient.invalidateQueries({ queryKey: ['session', id] });
+      queryClient.invalidateQueries({ queryKey: ['sessions'] });
+    },
+    onError: (err) => {
+      const message = err instanceof ApiError ? err.message : 'Failed to stop series';
+      addToast(message, 'error');
+    },
+  });
+
   if (isLoading || !session) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -107,7 +121,17 @@ export default function SessionDetailPage() {
           <h1 className={`text-xl font-bold text-gray-900 dark:text-gray-100 ${isCanceled ? 'line-through' : ''}`}>
             {session.title}
           </h1>
-          <StatusBadge status={session.status} />
+          <div className="flex items-center gap-2">
+            {session.series_id && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Recurring
+              </span>
+            )}
+            <StatusBadge status={session.status} />
+          </div>
         </div>
 
         {session.description && (
@@ -127,7 +151,7 @@ export default function SessionDetailPage() {
         </div>
 
         {!isCanceled && (
-          <div className="mt-6 flex items-center gap-3">
+          <div className="mt-6 flex flex-wrap items-center gap-3">
             {session.user_rsvped ? (
               <button
                 onClick={() => setConfirmOpen(true)}
@@ -164,6 +188,15 @@ export default function SessionDetailPage() {
                 >
                   Cancel Session
                 </button>
+                {session.series_id && (
+                  <button
+                    onClick={() => setStopSeriesOpen(true)}
+                    disabled={stopSeriesMutation.isPending}
+                    className="rounded-md border border-orange-500 px-4 py-2 text-sm font-medium text-orange-600 transition-colors hover:bg-orange-50 disabled:opacity-50 dark:border-orange-400 dark:text-orange-400 dark:hover:bg-orange-900/30"
+                  >
+                    Stop Recurring
+                  </button>
+                )}
               </>
             )}
           </div>
@@ -197,6 +230,20 @@ export default function SessionDetailPage() {
           cancelSessionMutation.mutate();
         }}
         onCancel={() => setCancelSessionOpen(false)}
+      />
+
+      <ConfirmModal
+        open={stopSeriesOpen}
+        title="Stop recurring series?"
+        message={`This will stop generating new sessions for "${session.title}". Existing sessions will remain and can still be individually managed.`}
+        confirmLabel="Stop Recurring"
+        onConfirm={() => {
+          setStopSeriesOpen(false);
+          if (session.series_id) {
+            stopSeriesMutation.mutate(session.series_id);
+          }
+        }}
+        onCancel={() => setStopSeriesOpen(false)}
       />
     </div>
   );

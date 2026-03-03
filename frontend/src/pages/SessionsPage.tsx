@@ -1,11 +1,11 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { api, ApiError } from '../api/client';
 import SessionCard, { formatDateLabel } from '../components/SessionCard';
 import EmptyState from '../components/EmptyState';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import type { APIResponse, RSVP, SpaceSession } from '../types';
+import type { APIResponse, RSVP, RSVPWithMember, SpaceSession } from '../types';
 
 export default function SessionsPage() {
   const queryClient = useQueryClient();
@@ -19,6 +19,28 @@ export default function SessionsPage() {
       const res = await api.get<APIResponse<SpaceSession[]>>('/api/sessions');
       return res.data;
     },
+  });
+
+  // Fetch RSVPs for all displayed sessions in parallel
+  const rsvpQueries = useQueries({
+    queries: sessions.map((session) => ({
+      queryKey: ['rsvps', session.id],
+      queryFn: async () => {
+        const res = await api.get<APIResponse<RSVPWithMember[]>>(`/api/sessions/${session.id}/rsvps`);
+        return res.data;
+      },
+      staleTime: 60_000,
+      enabled: session.status !== 'canceled',
+    })),
+  });
+
+  // Build attendees lookup map
+  const attendeesMap = new Map<string, RSVPWithMember[]>();
+  sessions.forEach((session, i) => {
+    const query = rsvpQueries[i];
+    if (query?.data) {
+      attendeesMap.set(session.id, query.data);
+    }
   });
 
   const rsvpMutation = useMutation({
@@ -44,8 +66,9 @@ export default function SessionsPage() {
       const message = err instanceof ApiError ? err.message : 'Failed to RSVP';
       addToast(message, 'error');
     },
-    onSettled: () => {
+    onSettled: (_data, _err, sessionId) => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['rsvps', sessionId] });
     },
   });
 
@@ -72,8 +95,9 @@ export default function SessionsPage() {
       const message = err instanceof ApiError ? err.message : 'Failed to cancel RSVP';
       addToast(message, 'error');
     },
-    onSettled: () => {
+    onSettled: (_data, _err, sessionId) => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['rsvps', sessionId] });
     },
   });
 
@@ -149,6 +173,7 @@ export default function SessionsPage() {
               <SessionCard
                 key={session.id}
                 session={session}
+                attendees={attendeesMap.get(session.id)}
                 onRSVP={(id) => rsvpMutation.mutate(id)}
                 onCancelRSVP={(id) => cancelRSVPMutation.mutate(id)}
                 onCancelSession={(id) => cancelSessionMutation.mutate(id)}

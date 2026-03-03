@@ -74,6 +74,7 @@ func main() {
 	memberRepo := repository.NewMemberRepository(pool)
 	tokenRepo := repository.NewMagicTokenRepository(pool)
 	sessionRepo := repository.NewSessionRepository(pool)
+	seriesRepo := repository.NewSeriesRepository(pool)
 	rsvpRepo := repository.NewRSVPRepository(pool)
 
 	emailSender := service.NewResendEmailSender(cfg.ResendAPIKey, cfg.ResendFromEmail)
@@ -89,6 +90,7 @@ func main() {
 	memberSvc := service.NewMemberService(memberRepo, emailSender, cfg.FrontendURL)
 	authSvc := service.NewAuthService(tokenRepo, memberRepo, emailSender, cfg.SessionSecret, cfg.FrontendURL, cfg.IsSecure())
 	sessionSvc := service.NewSessionService(sessionRepo, notifier)
+	sessionSvc.SetSeriesRepo(seriesRepo)
 	sessionSvc.SetEmailNotifier(emailSender, rsvpRepo)
 	rsvpSvc := service.NewRSVPService(rsvpRepo, memberRepo, notifier)
 

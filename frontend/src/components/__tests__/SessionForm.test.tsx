@@ -14,6 +14,7 @@ function makeSession(overrides: Partial<SpaceSession> = {}): SpaceSession {
     end_time: '18:00',
     capacity: 8,
     status: 'scheduled',
+    series_id: null,
     created_by: 'admin-1',
     created_at: '2026-03-01T00:00:00Z',
     updated_at: '2026-03-01T00:00:00Z',
@@ -40,15 +41,17 @@ describe('SessionForm', () => {
       expect(screen.getByRole('button', { name: 'Create Session' })).toBeInTheDocument();
     });
 
-    it('shows repeat weekly checkbox', () => {
+    it('shows repeat options', () => {
       render(<SessionForm onSubmit={vi.fn()} />);
-      expect(screen.getByLabelText(/repeat weekly/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/no repeat/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/repeat weekly for/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/repeat forever/i)).toBeInTheDocument();
     });
 
-    it('shows week count input when repeat weekly checked', async () => {
+    it('shows week count input when repeat weekly selected', async () => {
       const user = userEvent.setup();
       render(<SessionForm onSubmit={vi.fn()} />);
-      await user.click(screen.getByLabelText(/repeat weekly/i));
+      await user.click(screen.getByLabelText(/repeat weekly for/i));
       expect(screen.getByDisplayValue('1')).toBeInTheDocument();
       expect(screen.getByText('weeks')).toBeInTheDocument();
     });
@@ -112,7 +115,7 @@ describe('SessionForm', () => {
       });
     });
 
-    it('submits with repeat_weekly when checked', async () => {
+    it('submits with repeat_weekly when selected', async () => {
       const user = userEvent.setup();
       const onSubmit = vi.fn().mockResolvedValue(undefined);
       render(<SessionForm onSubmit={onSubmit} />);
@@ -123,7 +126,7 @@ describe('SessionForm', () => {
       await user.type(screen.getByLabelText(/end time/i), '18:00');
       await user.type(screen.getByLabelText(/capacity/i), '8');
 
-      await user.click(screen.getByLabelText(/repeat weekly/i));
+      await user.click(screen.getByLabelText(/repeat weekly for/i));
       // Default repeat count is 1
       await user.click(screen.getByRole('button', { name: 'Create Session' }));
 
@@ -155,9 +158,10 @@ describe('SessionForm', () => {
       expect(screen.getByRole('button', { name: 'Save Changes' })).toBeInTheDocument();
     });
 
-    it('does not show repeat weekly checkbox in edit mode', () => {
+    it('does not show repeat options in edit mode', () => {
       render(<SessionForm session={makeSession()} onSubmit={vi.fn()} />);
-      expect(screen.queryByLabelText(/repeat weekly/i)).toBeNull();
+      expect(screen.queryByLabelText(/no repeat/i)).toBeNull();
+      expect(screen.queryByLabelText(/repeat forever/i)).toBeNull();
     });
 
     it('sends only changed fields on edit', async () => {
