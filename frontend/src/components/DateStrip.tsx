@@ -76,7 +76,7 @@ export default function DateStrip({ dates, selected, onSelect, monthLabel, onPre
       ) : (
         <div
           ref={containerRef}
-          className="flex gap-2 overflow-x-auto py-2 px-1 scrollbar-hide"
+          className="flex justify-center gap-2 overflow-x-auto py-2 px-1 scrollbar-hide"
           role="tablist"
           aria-label="Session dates"
         >
