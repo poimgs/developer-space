@@ -24,3 +24,6 @@ uploads/
 # Test artifacts
 .playwright-mcp/
 *.png
+
+# PWA icons (override *.png ignore)
+!frontend/public/*.png
