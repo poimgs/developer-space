@@ -35,6 +35,8 @@ type CreateSessionRequest struct {
 	Location      *string    `json:"location"`
 	RepeatWeekly  int        `json:"repeat_weekly"`
 	RepeatForever bool       `json:"repeat_forever"`
+	DayOfWeek     *int       `json:"day_of_week"`
+	EveryNWeeks   int        `json:"every_n_weeks"`
 	SeriesID      *uuid.UUID `json:"-"`
 }
 

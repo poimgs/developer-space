@@ -69,6 +69,8 @@ export interface CreateSessionRequest {
   location?: string | null;
   repeat_weekly?: number;
   repeat_forever?: boolean;
+  day_of_week?: number;
+  every_n_weeks?: number;
 }
 
 export interface UpdateSessionRequest {

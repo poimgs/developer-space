@@ -718,6 +718,184 @@ func TestUpdateSession_EndTimeBeforeStartTime(t *testing.T) {
 	}
 }
 
+func TestCreateSession_RecurringEvery2Weeks(t *testing.T) {
+	repo := newMockSessionRepo()
+	notifier := &mockNotifier{}
+	svc := NewSessionService(repo, notifier)
+
+	baseDate := futureDate()
+	result, err := svc.Create(context.Background(), model.CreateSessionRequest{
+		Title:        "Biweekly Session",
+		Date:         baseDate,
+		StartTime:    "14:00",
+		EndTime:      "18:00",
+		Capacity:     8,
+		RepeatWeekly: 3,
+		EveryNWeeks:  2,
+	}, uuid.New())
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	sessions, ok := result.([]model.SpaceSession)
+	if !ok {
+		t.Fatal("expected []SpaceSession for recurring")
+	}
+	if len(sessions) != 4 {
+		t.Fatalf("expected 4 sessions (N+1), got %d", len(sessions))
+	}
+
+	// Verify dates advance by 14 days each
+	base, _ := time.Parse("2006-01-02", baseDate)
+	for i, s := range sessions {
+		expected := base.AddDate(0, 0, 14*i).Format("2006-01-02")
+		if s.Date != expected {
+			t.Errorf("session[%d]: expected date %s, got %s", i, expected, s.Date)
+		}
+	}
+}
+
+func TestCreateSession_RecurringWithDayOfWeek(t *testing.T) {
+	repo := newMockSessionRepo()
+	notifier := &mockNotifier{}
+	svc := NewSessionService(repo, notifier)
+
+	// Pick a date and choose a different weekday
+	baseDate := futureDate()
+	base, _ := time.Parse("2006-01-02", baseDate)
+	// Target: next weekday after the base date's weekday (wrapping around)
+	targetDay := (int(base.Weekday()) + 2) % 7
+
+	result, err := svc.Create(context.Background(), model.CreateSessionRequest{
+		Title:        "Shifted Day Session",
+		Date:         baseDate,
+		StartTime:    "14:00",
+		EndTime:      "18:00",
+		Capacity:     8,
+		RepeatWeekly: 2,
+		DayOfWeek:    &targetDay,
+	}, uuid.New())
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	sessions, ok := result.([]model.SpaceSession)
+	if !ok {
+		t.Fatal("expected []SpaceSession for recurring")
+	}
+	if len(sessions) != 3 {
+		t.Fatalf("expected 3 sessions (N+1), got %d", len(sessions))
+	}
+
+	// Verify all sessions land on the target weekday
+	for i, s := range sessions {
+		d, _ := time.Parse("2006-01-02", s.Date)
+		if int(d.Weekday()) != targetDay {
+			t.Errorf("session[%d]: expected weekday %d, got %d (date %s)", i, targetDay, int(d.Weekday()), s.Date)
+		}
+	}
+
+	// Verify first session is on or after baseDate
+	first, _ := time.Parse("2006-01-02", sessions[0].Date)
+	if first.Before(base) {
+		t.Errorf("first session %s is before base date %s", sessions[0].Date, baseDate)
+	}
+}
+
+func TestCreateSession_InvalidDayOfWeek(t *testing.T) {
+	repo := newMockSessionRepo()
+	svc := NewSessionService(repo, &mockNotifier{})
+
+	invalidDay := 7
+	_, err := svc.Create(context.Background(), model.CreateSessionRequest{
+		Title:        "Test",
+		Date:         futureDate(),
+		StartTime:    "14:00",
+		EndTime:      "18:00",
+		Capacity:     8,
+		RepeatWeekly: 2,
+		DayOfWeek:    &invalidDay,
+	}, uuid.New())
+
+	var ve *ValidationError
+	if !errors.As(err, &ve) {
+		t.Fatalf("expected ValidationError, got %v", err)
+	}
+	if _, ok := ve.Details["day_of_week"]; !ok {
+		t.Error("expected day_of_week validation error")
+	}
+}
+
+func TestCreateSession_DayOfWeekWithoutRepeat(t *testing.T) {
+	repo := newMockSessionRepo()
+	svc := NewSessionService(repo, &mockNotifier{})
+
+	day := 3
+	_, err := svc.Create(context.Background(), model.CreateSessionRequest{
+		Title:     "Test",
+		Date:      futureDate(),
+		StartTime: "14:00",
+		EndTime:   "18:00",
+		Capacity:  8,
+		DayOfWeek: &day,
+	}, uuid.New())
+
+	var ve *ValidationError
+	if !errors.As(err, &ve) {
+		t.Fatalf("expected ValidationError, got %v", err)
+	}
+	if ve.Details["day_of_week"] != "only valid with repeat_weekly or repeat_forever" {
+		t.Errorf("expected day_of_week error, got %q", ve.Details["day_of_week"])
+	}
+}
+
+func TestCreateSession_InvalidEveryNWeeks(t *testing.T) {
+	repo := newMockSessionRepo()
+	svc := NewSessionService(repo, &mockNotifier{})
+
+	_, err := svc.Create(context.Background(), model.CreateSessionRequest{
+		Title:        "Test",
+		Date:         futureDate(),
+		StartTime:    "14:00",
+		EndTime:      "18:00",
+		Capacity:     8,
+		RepeatWeekly: 2,
+		EveryNWeeks:  5,
+	}, uuid.New())
+
+	var ve *ValidationError
+	if !errors.As(err, &ve) {
+		t.Fatalf("expected ValidationError, got %v", err)
+	}
+	if ve.Details["every_n_weeks"] != "must be between 1 and 4" {
+		t.Errorf("expected every_n_weeks error, got %q", ve.Details["every_n_weeks"])
+	}
+}
+
+func TestCreateSession_EveryNWeeksWithoutRepeat(t *testing.T) {
+	repo := newMockSessionRepo()
+	svc := NewSessionService(repo, &mockNotifier{})
+
+	_, err := svc.Create(context.Background(), model.CreateSessionRequest{
+		Title:       "Test",
+		Date:        futureDate(),
+		StartTime:   "14:00",
+		EndTime:     "18:00",
+		Capacity:    8,
+		EveryNWeeks: 2,
+	}, uuid.New())
+
+	var ve *ValidationError
+	if !errors.As(err, &ve) {
+		t.Fatalf("expected ValidationError, got %v", err)
+	}
+	if ve.Details["every_n_weeks"] != "only valid with repeat_weekly or repeat_forever" {
+		t.Errorf("expected every_n_weeks error, got %q", ve.Details["every_n_weeks"])
+	}
+}
+
 func TestList_ReturnsEmptySlice(t *testing.T) {
 	repo := newMockSessionRepo()
 	svc := NewSessionService(repo, &mockNotifier{})

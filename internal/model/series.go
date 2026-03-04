@@ -14,6 +14,7 @@ type SessionSeries struct {
 	StartTime   string    `json:"start_time"`
 	EndTime     string    `json:"end_time"`
 	Capacity    int       `json:"capacity"`
+	EveryNWeeks int       `json:"every_n_weeks"`
 	IsActive    bool      `json:"is_active"`
 	CreatedBy   uuid.UUID `json:"created_by"`
 	CreatedAt   time.Time `json:"created_at"`

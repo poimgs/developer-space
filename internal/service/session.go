@@ -82,15 +82,44 @@ func (s *SessionService) Create(ctx context.Context, req model.CreateSessionRequ
 	return session, nil
 }
 
+// resolveRecurrenceStart returns the effective day-of-week and the first session date.
+// If dayOfWeek is nil, it uses the weekday of baseDate. If dayOfWeek differs from baseDate,
+// it advances to the next matching weekday.
+func resolveRecurrenceStart(baseDate time.Time, dayOfWeek *int) (int, time.Time) {
+	if dayOfWeek == nil {
+		return int(baseDate.Weekday()), baseDate
+	}
+	targetDay := time.Weekday(*dayOfWeek)
+	if baseDate.Weekday() == targetDay {
+		return *dayOfWeek, baseDate
+	}
+	// Advance to the next matching weekday
+	d := baseDate
+	for d.Weekday() != targetDay {
+		d = d.AddDate(0, 0, 1)
+	}
+	return *dayOfWeek, d
+}
+
+// effectiveInterval returns the recurrence interval in weeks, treating 0 as 1.
+func effectiveInterval(everyNWeeks int) int {
+	if everyNWeeks < 1 {
+		return 1
+	}
+	return everyNWeeks
+}
+
 func (s *SessionService) createRecurring(ctx context.Context, req model.CreateSessionRequest, createdBy uuid.UUID) ([]model.SpaceSession, error) {
 	baseDate, _ := time.Parse("2006-01-02", req.Date)
+	_, startDate := resolveRecurrenceStart(baseDate, req.DayOfWeek)
+	interval := effectiveInterval(req.EveryNWeeks)
 
 	var reqs []model.CreateSessionRequest
 	for i := 0; i <= req.RepeatWeekly; i++ {
 		sessionReq := model.CreateSessionRequest{
 			Title:       req.Title,
 			Description: req.Description,
-			Date:        baseDate.AddDate(0, 0, 7*i).Format("2006-01-02"),
+			Date:        startDate.AddDate(0, 0, interval*7*i).Format("2006-01-02"),
 			StartTime:   req.StartTime,
 			EndTime:     req.EndTime,
 			Capacity:    req.Capacity,
@@ -111,7 +140,8 @@ func (s *SessionService) createRecurring(ctx context.Context, req model.CreateSe
 
 func (s *SessionService) createSeries(ctx context.Context, req model.CreateSessionRequest, createdBy uuid.UUID) ([]model.SpaceSession, error) {
 	baseDate, _ := time.Parse("2006-01-02", req.Date)
-	dayOfWeek := int(baseDate.Weekday())
+	dayOfWeek, startDate := resolveRecurrenceStart(baseDate, req.DayOfWeek)
+	interval := effectiveInterval(req.EveryNWeeks)
 
 	series := model.SessionSeries{
 		Title:       req.Title,
@@ -120,6 +150,7 @@ func (s *SessionService) createSeries(ctx context.Context, req model.CreateSessi
 		StartTime:   req.StartTime,
 		EndTime:     req.EndTime,
 		Capacity:    req.Capacity,
+		EveryNWeeks: interval,
 		CreatedBy:   createdBy,
 	}
 
@@ -128,9 +159,9 @@ func (s *SessionService) createSeries(ctx context.Context, req model.CreateSessi
 		return nil, fmt.Errorf("creating session series: %w", err)
 	}
 
-	// Generate sessions for the next 8 weeks
-	toDate := baseDate.AddDate(0, 0, 8*7)
-	sessions, err := s.seriesRepo.GenerateSessions(ctx, *created, baseDate, toDate)
+	// Generate sessions for the next 60+ days
+	toDate := startDate.AddDate(0, 0, 67)
+	sessions, err := s.seriesRepo.GenerateSessions(ctx, *created, startDate, toDate)
 	if err != nil {
 		return nil, fmt.Errorf("generating series sessions: %w", err)
 	}
@@ -161,10 +192,10 @@ func (s *SessionService) extendActiveSeries(ctx context.Context, to string) {
 	if to != "" {
 		toDate, err = time.Parse("2006-01-02", to)
 		if err != nil {
-			toDate = today.AddDate(0, 0, 28)
+			toDate = today.AddDate(0, 0, 60)
 		}
 	} else {
-		toDate = today.AddDate(0, 0, 28)
+		toDate = today.AddDate(0, 0, 60)
 	}
 	// Extend a week beyond the request to ensure coverage
 	toDate = toDate.AddDate(0, 0, 7)
@@ -329,6 +360,22 @@ func (s *SessionService) validateCreate(req model.CreateSessionRequest) error {
 		details["repeat_weekly"] = "cannot use both repeat_weekly and repeat_forever"
 	} else if !req.RepeatForever && (req.RepeatWeekly < 0 || req.RepeatWeekly > 12) {
 		details["repeat_weekly"] = "must be between 0 and 12"
+	}
+
+	isRecurring := req.RepeatForever || req.RepeatWeekly > 0
+	if req.DayOfWeek != nil {
+		if !isRecurring {
+			details["day_of_week"] = "only valid with repeat_weekly or repeat_forever"
+		} else if *req.DayOfWeek < 0 || *req.DayOfWeek > 6 {
+			details["day_of_week"] = "must be between 0 (Sunday) and 6 (Saturday)"
+		}
+	}
+	if req.EveryNWeeks != 0 {
+		if !isRecurring {
+			details["every_n_weeks"] = "only valid with repeat_weekly or repeat_forever"
+		} else if req.EveryNWeeks < 1 || req.EveryNWeeks > 4 {
+			details["every_n_weeks"] = "must be between 1 and 4"
+		}
 	}
 
 	if len(details) > 0 {

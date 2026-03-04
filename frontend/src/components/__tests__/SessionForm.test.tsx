@@ -54,7 +54,8 @@ describe('SessionForm', () => {
       const user = userEvent.setup();
       render(<SessionForm onSubmit={vi.fn()} />);
       await user.click(screen.getByLabelText(/repeat weekly for/i));
-      expect(screen.getByDisplayValue('1')).toBeInTheDocument();
+      const inputs = screen.getAllByDisplayValue('1');
+      expect(inputs.length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText('weeks')).toBeInTheDocument();
     });
 
@@ -243,6 +244,87 @@ describe('SessionForm', () => {
       await user.click(screen.getByRole('button', { name: 'Save Changes' }));
 
       expect(onSubmit).toHaveBeenCalledWith({ location: 'Room 99' });
+    });
+  });
+
+  describe('recurrence options', () => {
+    it('shows day-of-week and interval selectors when repeat weekly is selected', async () => {
+      const user = userEvent.setup();
+      render(<SessionForm onSubmit={vi.fn()} />);
+      // Not visible initially
+      expect(screen.queryByLabelText(/recur on/i)).toBeNull();
+      expect(screen.queryByLabelText(/every$/i)).toBeNull();
+
+      await user.click(screen.getByLabelText(/repeat weekly for/i));
+      expect(screen.getByLabelText(/recur on/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/every$/i)).toBeInTheDocument();
+    });
+
+    it('shows day-of-week and interval selectors when repeat forever is selected', async () => {
+      const user = userEvent.setup();
+      render(<SessionForm onSubmit={vi.fn()} />);
+      await user.click(screen.getByLabelText(/repeat forever/i));
+      expect(screen.getByLabelText(/recur on/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/every$/i)).toBeInTheDocument();
+    });
+
+    it('hides day-of-week and interval selectors when no repeat is selected', async () => {
+      const user = userEvent.setup();
+      render(<SessionForm onSubmit={vi.fn()} />);
+      await user.click(screen.getByLabelText(/repeat weekly for/i));
+      expect(screen.getByLabelText(/recur on/i)).toBeInTheDocument();
+
+      await user.click(screen.getByLabelText(/no repeat/i));
+      expect(screen.queryByLabelText(/recur on/i)).toBeNull();
+      expect(screen.queryByLabelText(/every$/i)).toBeNull();
+    });
+
+    it('includes day_of_week and every_n_weeks in submitted data when set', async () => {
+      const user = userEvent.setup();
+      const onSubmit = vi.fn().mockResolvedValue(undefined);
+      render(<SessionForm onSubmit={onSubmit} />);
+
+      await user.type(screen.getByLabelText(/title/i), 'Biweekly');
+      await user.type(screen.getByLabelText(/date/i), '2026-04-01');
+      await user.type(screen.getByLabelText(/start time/i), '14:00');
+      await user.type(screen.getByLabelText(/end time/i), '18:00');
+      await user.type(screen.getByLabelText(/capacity/i), '8');
+
+      await user.click(screen.getByLabelText(/repeat weekly for/i));
+
+      // Select Wednesday (3)
+      await user.selectOptions(screen.getByLabelText(/recur on/i), '3');
+      // Select every 2 weeks
+      await user.selectOptions(screen.getByLabelText(/every$/i), '2');
+
+      await user.click(screen.getByRole('button', { name: 'Create Session' }));
+
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          repeat_weekly: 1,
+          day_of_week: 3,
+          every_n_weeks: 2,
+        }),
+      );
+    });
+
+    it('does not include day_of_week when default is selected', async () => {
+      const user = userEvent.setup();
+      const onSubmit = vi.fn().mockResolvedValue(undefined);
+      render(<SessionForm onSubmit={onSubmit} />);
+
+      await user.type(screen.getByLabelText(/title/i), 'Weekly');
+      await user.type(screen.getByLabelText(/date/i), '2026-04-01');
+      await user.type(screen.getByLabelText(/start time/i), '14:00');
+      await user.type(screen.getByLabelText(/end time/i), '18:00');
+      await user.type(screen.getByLabelText(/capacity/i), '8');
+
+      await user.click(screen.getByLabelText(/repeat forever/i));
+      await user.click(screen.getByRole('button', { name: 'Create Session' }));
+
+      const submittedData = onSubmit.mock.calls[0][0];
+      expect(submittedData.day_of_week).toBeUndefined();
+      expect(submittedData.every_n_weeks).toBeUndefined();
     });
   });
 

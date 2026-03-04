@@ -95,7 +95,7 @@ func (r *SessionRepository) List(ctx context.Context, from, to, status string, m
 		argIdx++
 	} else {
 		conditions = append(conditions, fmt.Sprintf("date <= $%d", argIdx))
-		args = append(args, time.Now().AddDate(0, 0, 28).Format("2006-01-02"))
+		args = append(args, time.Now().AddDate(0, 0, 60).Format("2006-01-02"))
 		argIdx++
 	}
 

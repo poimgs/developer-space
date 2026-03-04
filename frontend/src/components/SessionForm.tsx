@@ -28,6 +28,8 @@ export default function SessionForm({ session, onSubmit, loading }: SessionFormP
   const [location, setLocation] = useState(session?.location ?? '');
   const [repeatMode, setRepeatMode] = useState<'none' | 'weekly' | 'forever'>('none');
   const [repeatCount, setRepeatCount] = useState(1);
+  const [dayOfWeek, setDayOfWeek] = useState<number | null>(null);
+  const [everyNWeeks, setEveryNWeeks] = useState(1);
   const [errors, setErrors] = useState<FormErrors>({});
 
   function validate(): FormErrors {
@@ -79,6 +81,10 @@ export default function SessionForm({ session, onSubmit, loading }: SessionFormP
       if (location.trim()) data.location = location.trim();
       if (repeatMode === 'weekly') data.repeat_weekly = repeatCount;
       if (repeatMode === 'forever') data.repeat_forever = true;
+      if (repeatMode !== 'none') {
+        if (dayOfWeek !== null) data.day_of_week = dayOfWeek;
+        if (everyNWeeks > 1) data.every_n_weeks = everyNWeeks;
+      }
       await onSubmit(data);
     }
   }
@@ -239,6 +245,53 @@ export default function SessionForm({ session, onSubmit, loading }: SessionFormP
               <span className="text-sm text-stone-700 dark:text-stone-300">Repeat forever</span>
             </label>
           </div>
+
+          {repeatMode !== 'none' && (
+            <div className="ml-6 space-y-3 pt-1">
+              <div>
+                <label htmlFor="day_of_week" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
+                  Recur on
+                </label>
+                <select
+                  id="day_of_week"
+                  value={dayOfWeek === null ? '' : dayOfWeek}
+                  onChange={(e) => setDayOfWeek(e.target.value === '' ? null : parseInt(e.target.value, 10))}
+                  className="mt-1 block w-full rounded-md border border-stone-300 px-3 py-2 text-sm text-stone-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none dark:border-stone-600 dark:bg-stone-700 dark:text-stone-100"
+                >
+                  <option value="">Same day as start date</option>
+                  <option value="0">Sunday</option>
+                  <option value="1">Monday</option>
+                  <option value="2">Tuesday</option>
+                  <option value="3">Wednesday</option>
+                  <option value="4">Thursday</option>
+                  <option value="5">Friday</option>
+                  <option value="6">Saturday</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="every_n_weeks" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
+                  Every
+                </label>
+                <div className="mt-1 flex items-center gap-2">
+                  <select
+                    id="every_n_weeks"
+                    value={everyNWeeks}
+                    onChange={(e) => setEveryNWeeks(parseInt(e.target.value, 10))}
+                    className="block w-20 rounded-md border border-stone-300 px-3 py-2 text-sm text-stone-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none dark:border-stone-600 dark:bg-stone-700 dark:text-stone-100"
+                  >
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                  </select>
+                  <span className="text-sm text-stone-600 dark:text-stone-400">
+                    {everyNWeeks === 1 ? 'week' : 'weeks'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

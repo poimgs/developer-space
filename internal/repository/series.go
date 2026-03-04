@@ -24,11 +24,11 @@ func NewSeriesRepository(pool *pgxpool.Pool) *SeriesRepository {
 func (r *SeriesRepository) Create(ctx context.Context, series model.SessionSeries) (*model.SessionSeries, error) {
 	var s model.SessionSeries
 	err := r.pool.QueryRow(ctx,
-		`INSERT INTO session_series (title, description, day_of_week, start_time, end_time, capacity, created_by)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7)
-		 RETURNING id, title, description, day_of_week, to_char(start_time, 'HH24:MI'), to_char(end_time, 'HH24:MI'), capacity, is_active, created_by, created_at, updated_at`,
-		series.Title, series.Description, series.DayOfWeek, series.StartTime, series.EndTime, series.Capacity, series.CreatedBy,
-	).Scan(&s.ID, &s.Title, &s.Description, &s.DayOfWeek, &s.StartTime, &s.EndTime, &s.Capacity, &s.IsActive, &s.CreatedBy, &s.CreatedAt, &s.UpdatedAt)
+		`INSERT INTO session_series (title, description, day_of_week, start_time, end_time, capacity, every_n_weeks, created_by)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		 RETURNING id, title, description, day_of_week, to_char(start_time, 'HH24:MI'), to_char(end_time, 'HH24:MI'), capacity, every_n_weeks, is_active, created_by, created_at, updated_at`,
+		series.Title, series.Description, series.DayOfWeek, series.StartTime, series.EndTime, series.Capacity, series.EveryNWeeks, series.CreatedBy,
+	).Scan(&s.ID, &s.Title, &s.Description, &s.DayOfWeek, &s.StartTime, &s.EndTime, &s.Capacity, &s.EveryNWeeks, &s.IsActive, &s.CreatedBy, &s.CreatedAt, &s.UpdatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("inserting session series: %w", err)
 	}
@@ -38,9 +38,9 @@ func (r *SeriesRepository) Create(ctx context.Context, series model.SessionSerie
 func (r *SeriesRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.SessionSeries, error) {
 	var s model.SessionSeries
 	err := r.pool.QueryRow(ctx,
-		`SELECT id, title, description, day_of_week, to_char(start_time, 'HH24:MI'), to_char(end_time, 'HH24:MI'), capacity, is_active, created_by, created_at, updated_at
+		`SELECT id, title, description, day_of_week, to_char(start_time, 'HH24:MI'), to_char(end_time, 'HH24:MI'), capacity, every_n_weeks, is_active, created_by, created_at, updated_at
 		 FROM session_series WHERE id = $1`, id,
-	).Scan(&s.ID, &s.Title, &s.Description, &s.DayOfWeek, &s.StartTime, &s.EndTime, &s.Capacity, &s.IsActive, &s.CreatedBy, &s.CreatedAt, &s.UpdatedAt)
+	).Scan(&s.ID, &s.Title, &s.Description, &s.DayOfWeek, &s.StartTime, &s.EndTime, &s.Capacity, &s.EveryNWeeks, &s.IsActive, &s.CreatedBy, &s.CreatedAt, &s.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
@@ -52,7 +52,7 @@ func (r *SeriesRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.Se
 
 func (r *SeriesRepository) ListActive(ctx context.Context) ([]model.SessionSeries, error) {
 	rows, err := r.pool.Query(ctx,
-		`SELECT id, title, description, day_of_week, to_char(start_time, 'HH24:MI'), to_char(end_time, 'HH24:MI'), capacity, is_active, created_by, created_at, updated_at
+		`SELECT id, title, description, day_of_week, to_char(start_time, 'HH24:MI'), to_char(end_time, 'HH24:MI'), capacity, every_n_weeks, is_active, created_by, created_at, updated_at
 		 FROM session_series WHERE is_active = true`)
 	if err != nil {
 		return nil, fmt.Errorf("listing active series: %w", err)
@@ -62,7 +62,7 @@ func (r *SeriesRepository) ListActive(ctx context.Context) ([]model.SessionSerie
 	var series []model.SessionSeries
 	for rows.Next() {
 		var s model.SessionSeries
-		if err := rows.Scan(&s.ID, &s.Title, &s.Description, &s.DayOfWeek, &s.StartTime, &s.EndTime, &s.Capacity, &s.IsActive, &s.CreatedBy, &s.CreatedAt, &s.UpdatedAt); err != nil {
+		if err := rows.Scan(&s.ID, &s.Title, &s.Description, &s.DayOfWeek, &s.StartTime, &s.EndTime, &s.Capacity, &s.EveryNWeeks, &s.IsActive, &s.CreatedBy, &s.CreatedAt, &s.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("scanning session series: %w", err)
 		}
 		series = append(series, s)
@@ -86,11 +86,33 @@ func (r *SeriesRepository) Deactivate(ctx context.Context, id uuid.UUID) error {
 // GenerateSessions creates sessions for the given series for each matching weekday
 // between fromDate and toDate (inclusive). Uses ON CONFLICT DO NOTHING for idempotency.
 func (r *SeriesRepository) GenerateSessions(ctx context.Context, series model.SessionSeries, fromDate, toDate time.Time) ([]model.SpaceSession, error) {
+	// Determine the interval in weeks (default to 1)
+	interval := series.EveryNWeeks
+	if interval < 1 {
+		interval = 1
+	}
+	advanceDays := 7 * interval
+
 	// Find the first matching weekday >= fromDate
 	current := fromDate
 	targetDay := time.Weekday(series.DayOfWeek)
 	for current.Weekday() != targetDay {
 		current = current.AddDate(0, 0, 1)
+	}
+
+	// For bi-weekly+ series, ensure phase alignment by finding the last existing session
+	if interval > 1 {
+		var lastDate *time.Time
+		err := r.pool.QueryRow(ctx,
+			`SELECT MAX(date) FROM space_sessions WHERE series_id = $1`, series.ID,
+		).Scan(&lastDate)
+		if err == nil && lastDate != nil {
+			// Advance from the last existing session by the interval
+			candidate := lastDate.AddDate(0, 0, advanceDays)
+			if candidate.After(current) {
+				current = candidate
+			}
+		}
 	}
 
 	var sessions []model.SpaceSession
@@ -107,13 +129,13 @@ func (r *SeriesRepository) GenerateSessions(ctx context.Context, series model.Se
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				// ON CONFLICT DO NOTHING — session already exists for this date
-				current = current.AddDate(0, 0, 7)
+				current = current.AddDate(0, 0, advanceDays)
 				continue
 			}
 			return nil, fmt.Errorf("generating session for %s: %w", dateStr, err)
 		}
 		sessions = append(sessions, s)
-		current = current.AddDate(0, 0, 7)
+		current = current.AddDate(0, 0, advanceDays)
 	}
 
 	return sessions, nil
