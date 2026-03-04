@@ -7,7 +7,7 @@ import (
 	"github.com/developer-space/api/internal/service"
 )
 
-func RegisterRoutes(r chi.Router, memberHandler *MemberHandler, authHandler *AuthHandler, sessionHandler *SessionHandler, rsvpHandler *RSVPHandler, profileHandler *ProfileHandler, imageHandler *ImageHandler, authSvc *service.AuthService, memberRepo middleware.MemberLookup) {
+func RegisterRoutes(r chi.Router, memberHandler *MemberHandler, authHandler *AuthHandler, sessionHandler *SessionHandler, rsvpHandler *RSVPHandler, profileHandler *ProfileHandler, imageHandler *ImageHandler, skillsHandler *SkillsHandler, authSvc *service.AuthService, memberRepo middleware.MemberLookup) {
 	// Public auth routes
 	r.Route("/api/auth", func(r chi.Router) {
 		r.Post("/magic-link", authHandler.RequestMagicLink)
@@ -26,6 +26,12 @@ func RegisterRoutes(r chi.Router, memberHandler *MemberHandler, authHandler *Aut
 	r.Route("/api/profiles", func(r chi.Router) {
 		r.Use(middleware.Auth(authSvc, memberRepo))
 		r.Get("/{id}", profileHandler.GetPublicProfile)
+	})
+
+	// Skills route (authenticated)
+	r.Route("/api/skills", func(r chi.Router) {
+		r.Use(middleware.Auth(authSvc, memberRepo))
+		r.Get("/", skillsHandler.List)
 	})
 
 	// Admin-only member routes

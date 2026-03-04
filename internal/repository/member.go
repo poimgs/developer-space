@@ -216,3 +216,25 @@ func (r *MemberRepository) HasRSVPs(ctx context.Context, memberID uuid.UUID) (bo
 	}
 	return count > 0, nil
 }
+
+func (r *MemberRepository) DistinctSkills(ctx context.Context) ([]string, error) {
+	rows, err := r.pool.Query(ctx,
+		`SELECT DISTINCT unnest(skills) FROM members WHERE is_active = true ORDER BY 1`)
+	if err != nil {
+		return nil, fmt.Errorf("listing distinct skills: %w", err)
+	}
+	defer rows.Close()
+
+	var skills []string
+	for rows.Next() {
+		var s string
+		if err := rows.Scan(&s); err != nil {
+			return nil, fmt.Errorf("scanning skill: %w", err)
+		}
+		skills = append(skills, s)
+	}
+	if skills == nil {
+		skills = []string{}
+	}
+	return skills, nil
+}

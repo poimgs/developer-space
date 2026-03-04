@@ -59,6 +59,9 @@ export const api = {
   getPublicProfile: (id: string) =>
     request<APIResponse<PublicMember>>(`/api/profiles/${id}`),
 
+  getSkills: () =>
+    request<APIResponse<string[]>>('/api/skills'),
+
   uploadSessionImage: (sessionId: string, file: File) =>
     uploadRequest<APIResponse<{ image_url: string }>>(`/api/sessions/${sessionId}/image`, file),
 

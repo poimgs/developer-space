@@ -107,8 +107,9 @@ func main() {
 	rsvpHandler := handler.NewRSVPHandler(rsvpSvc)
 	profileHandler := handler.NewProfileHandler(authSvc)
 	imageHandler := handler.NewImageHandler(sessionSvc, uploadsDir)
+	skillsHandler := handler.NewSkillsHandler(memberSvc)
 
-	handler.RegisterRoutes(r, memberHandler, authHandler, sessionHandler, rsvpHandler, profileHandler, imageHandler, authSvc, memberRepo)
+	handler.RegisterRoutes(r, memberHandler, authHandler, sessionHandler, rsvpHandler, profileHandler, imageHandler, skillsHandler, authSvc, memberRepo)
 
 	// Serve uploaded files
 	fileServer := http.FileServer(http.Dir("."))

@@ -54,16 +54,11 @@ export default function MemberProfilePage() {
   }
 
   const isSelf = user?.id === profile.id;
+  const telegramHandle = profile.telegram_handle?.replace(/^@/, '');
 
   return (
     <div className="mx-auto max-w-lg px-4 py-8">
       <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100">{profile.name}</h1>
-
-      {profile.telegram_handle && (
-        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-          @{profile.telegram_handle.replace(/^@/, '')}
-        </p>
-      )}
 
       {isSelf && (
         <Link
@@ -99,10 +94,22 @@ export default function MemberProfilePage() {
         </section>
       )}
 
-      {(profile.linkedin_url || profile.instagram_handle || profile.github_username) && (
+      {(telegramHandle || profile.linkedin_url || profile.instagram_handle || profile.github_username) && (
         <section className="mt-6">
-          <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">Links</h2>
+          <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">Social Links</h2>
           <ul className="mt-2 space-y-2">
+            {telegramHandle && (
+              <li>
+                <a
+                  href={`https://t.me/${telegramHandle}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
+                >
+                  Telegram
+                </a>
+              </li>
+            )}
             {profile.linkedin_url && (
               <li>
                 <a

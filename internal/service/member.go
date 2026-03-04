@@ -29,6 +29,7 @@ type MemberRepo interface {
 	Update(ctx context.Context, id uuid.UUID, req model.UpdateMemberRequest) (*model.Member, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	HasRSVPs(ctx context.Context, memberID uuid.UUID) (bool, error)
+	DistinctSkills(ctx context.Context) ([]string, error)
 }
 
 // EmailSender sends emails via Resend.
@@ -162,6 +163,10 @@ func (s *MemberService) Delete(ctx context.Context, id uuid.UUID) error {
 		return fmt.Errorf("deleting member: %w", err)
 	}
 	return nil
+}
+
+func (s *MemberService) ListDistinctSkills(ctx context.Context) ([]string, error) {
+	return s.repo.DistinctSkills(ctx)
 }
 
 // ValidationError holds field-level validation details.

@@ -88,7 +88,6 @@ describe('MemberProfilePage', () => {
     await waitFor(() => {
       expect(screen.getByText('Alice')).toBeInTheDocument();
     });
-    expect(screen.getByText('@alice')).toBeInTheDocument();
     expect(screen.getByText('Full-stack developer who loves building things.')).toBeInTheDocument();
     expect(screen.getByText('react')).toBeInTheDocument();
     expect(screen.getByText('go')).toBeInTheDocument();
@@ -103,12 +102,16 @@ describe('MemberProfilePage', () => {
     });
   });
 
-  it('renders social links with correct URLs', async () => {
+  it('renders social links with correct URLs including Telegram', async () => {
     renderWithRouter('member-1');
 
     await waitFor(() => {
-      expect(screen.getByText('LinkedIn')).toBeInTheDocument();
+      expect(screen.getByText('Telegram')).toBeInTheDocument();
     });
+    expect(screen.getByText('Telegram').closest('a')).toHaveAttribute(
+      'href',
+      'https://t.me/alice',
+    );
     expect(screen.getByText('LinkedIn').closest('a')).toHaveAttribute(
       'href',
       'https://linkedin.com/in/alice',
@@ -175,7 +178,7 @@ describe('MemberProfilePage', () => {
     });
     expect(screen.queryByText('About')).not.toBeInTheDocument();
     expect(screen.queryByText('Skills')).not.toBeInTheDocument();
-    expect(screen.queryByText('Links')).not.toBeInTheDocument();
+    expect(screen.queryByText('Social Links')).not.toBeInTheDocument();
   });
 
   it('shows loading state initially', () => {
@@ -185,18 +188,41 @@ describe('MemberProfilePage', () => {
     expect(screen.getByText('Loading profile…')).toBeInTheDocument();
   });
 
-  it('strips @ prefix from telegram handle display', async () => {
+  it('shows Social Links section heading', async () => {
+    renderWithRouter('member-1');
+
+    await waitFor(() => {
+      expect(screen.getByText('Social Links')).toBeInTheDocument();
+    });
+  });
+
+  it('shows Telegram as a t.me link in Social Links', async () => {
+    renderWithRouter('member-1');
+
+    await waitFor(() => {
+      expect(screen.getByText('Telegram')).toBeInTheDocument();
+    });
+    const link = screen.getByText('Telegram').closest('a');
+    expect(link).toHaveAttribute('href', 'https://t.me/alice');
+    expect(link).toHaveAttribute('target', '_blank');
+  });
+
+  it('shows Social Links when only telegram is present', async () => {
     mockGetPublicProfile.mockResolvedValue({
-      data: makePublicMember({ telegram_handle: '@alice' }),
+      data: makePublicMember({
+        linkedin_url: null,
+        instagram_handle: null,
+        github_username: null,
+        telegram_handle: 'alice',
+      }),
     });
 
     renderWithRouter('member-1');
 
     await waitFor(() => {
-      expect(screen.getByText('@alice')).toBeInTheDocument();
+      expect(screen.getByText('Social Links')).toBeInTheDocument();
     });
-    // Should not show @@alice
-    expect(screen.queryByText('@@alice')).not.toBeInTheDocument();
+    expect(screen.getByText('Telegram')).toBeInTheDocument();
   });
 
   it('strips @ from instagram handle in URL', async () => {
@@ -221,7 +247,7 @@ describe('MemberProfilePage', () => {
     await waitFor(() => {
       expect(screen.getByText('LinkedIn')).toBeInTheDocument();
     });
-    for (const linkText of ['LinkedIn', 'Instagram', 'GitHub']) {
+    for (const linkText of ['Telegram', 'LinkedIn', 'Instagram', 'GitHub']) {
       const anchor = screen.getByText(linkText).closest('a');
       expect(anchor).toHaveAttribute('target', '_blank');
       expect(anchor).toHaveAttribute('rel', 'noopener noreferrer');

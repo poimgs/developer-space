@@ -132,6 +132,25 @@ func (m *mockMemberRepo) HasRSVPs(ctx context.Context, memberID uuid.UUID) (bool
 	return m.rsvpCounts[memberID] > 0, nil
 }
 
+func (m *mockMemberRepo) DistinctSkills(ctx context.Context) ([]string, error) {
+	seen := map[string]bool{}
+	var skills []string
+	for _, member := range m.members {
+		if member.IsActive && member.Skills != nil {
+			for _, s := range member.Skills {
+				if !seen[s] {
+					seen[s] = true
+					skills = append(skills, s)
+				}
+			}
+		}
+	}
+	if skills == nil {
+		skills = []string{}
+	}
+	return skills, nil
+}
+
 // mockEmailSender tracks invitation calls.
 type mockEmailSender struct {
 	calls []string

@@ -164,6 +164,9 @@ func (m *mockAuthMemberRepo) Delete(ctx context.Context, id uuid.UUID) error { r
 func (m *mockAuthMemberRepo) HasRSVPs(ctx context.Context, memberID uuid.UUID) (bool, error) {
 	return false, nil
 }
+func (m *mockAuthMemberRepo) DistinctSkills(ctx context.Context) ([]string, error) {
+	return []string{}, nil
+}
 
 func newTestAuthService() (*AuthService, *mockTokenRepo, *mockAuthMemberRepo, *mockMagicLinkSender) {
 	tokenRepo := &mockTokenRepo{}

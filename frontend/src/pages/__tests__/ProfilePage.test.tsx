@@ -7,6 +7,7 @@ import ProfilePage from '../ProfilePage';
 const mockAddToast = vi.fn();
 const mockRefresh = vi.fn();
 const mockPatch = vi.fn();
+const mockGetSkills = vi.fn();
 
 vi.mock('../../context/AuthContext', () => ({
   useAuth: () => ({
@@ -24,6 +25,7 @@ vi.mock('../../context/ToastContext', () => ({
 vi.mock('../../api/client', () => ({
   api: {
     patch: (...args: unknown[]) => mockPatch(...args),
+    getSkills: () => mockGetSkills(),
   },
   ApiError: class ApiError extends Error {
     status: number;
@@ -62,6 +64,7 @@ describe('ProfilePage', () => {
     mockUser = makeMember();
     mockPatch.mockResolvedValue({});
     mockRefresh.mockResolvedValue(undefined);
+    mockGetSkills.mockResolvedValue({ data: ['react', 'go', 'typescript'] });
   });
 
   afterEach(() => {
@@ -69,6 +72,7 @@ describe('ProfilePage', () => {
     mockAddToast.mockReset();
     mockPatch.mockReset();
     mockRefresh.mockReset();
+    mockGetSkills.mockReset();
   });
 
   it('renders all three sections', () => {
@@ -95,6 +99,21 @@ describe('ProfilePage', () => {
     expect(screen.getByLabelText(/LinkedIn URL/)).toHaveValue('https://linkedin.com/in/alice');
     expect(screen.getByLabelText(/Instagram Handle/)).toHaveValue('alice_gram');
     expect(screen.getByLabelText(/GitHub Username/)).toHaveValue('alice-dev');
+  });
+
+  it('shows Telegram Handle in Social Links section', () => {
+    render(<ProfilePage />);
+    // Telegram should be in Social Links, not Identity
+    const socialLinksSection = screen.getByText('Social Links').closest('section')!;
+    const telegramInput = screen.getByLabelText(/Telegram Handle/);
+    expect(socialLinksSection.contains(telegramInput)).toBe(true);
+  });
+
+  it('Identity section contains only Name', () => {
+    render(<ProfilePage />);
+    const identitySection = screen.getByText('Identity').closest('section')!;
+    expect(identitySection.contains(screen.getByLabelText(/Name/))).toBe(true);
+    expect(identitySection.contains(screen.getByLabelText(/Telegram Handle/))).toBe(false);
   });
 
   it('shows bio character counter', () => {
@@ -202,5 +221,12 @@ describe('ProfilePage', () => {
     mockUser = null;
     const { container } = render(<ProfilePage />);
     expect(container.querySelector('form')).toBeInTheDocument();
+  });
+
+  it('fetches skills suggestions on mount', async () => {
+    render(<ProfilePage />);
+    await waitFor(() => {
+      expect(mockGetSkills).toHaveBeenCalled();
+    });
   });
 });

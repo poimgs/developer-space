@@ -21,6 +21,7 @@ export default function ProfilePage() {
   const [instagramHandle, setInstagramHandle] = useState('');
   const [githubUsername, setGithubUsername] = useState('');
   const [saving, setSaving] = useState(false);
+  const [skillSuggestions, setSkillSuggestions] = useState<string[]>([]);
 
   useEffect(() => {
     if (user) {
@@ -33,6 +34,10 @@ export default function ProfilePage() {
       setGithubUsername(user.github_username ?? '');
     }
   }, [user]);
+
+  useEffect(() => {
+    api.getSkills().then((res) => setSkillSuggestions(res.data)).catch(() => {});
+  }, []);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -88,19 +93,6 @@ export default function ProfilePage() {
                 className={inputClass}
               />
             </div>
-            <div>
-              <label htmlFor="telegram" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-                Telegram Handle
-              </label>
-              <input
-                id="telegram"
-                type="text"
-                value={telegram}
-                onChange={(e) => setTelegram(e.target.value)}
-                placeholder="@username"
-                className={inputClass}
-              />
-            </div>
           </div>
         </section>
 
@@ -141,6 +133,7 @@ export default function ProfilePage() {
                   onChange={setSkills}
                   max={SKILLS_MAX}
                   placeholder="Add a skill…"
+                  suggestions={skillSuggestions}
                 />
               </div>
             </div>
@@ -151,6 +144,19 @@ export default function ProfilePage() {
         <section>
           <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">Social Links</h2>
           <div className="mt-4 space-y-4">
+            <div>
+              <label htmlFor="telegram" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
+                Telegram Handle
+              </label>
+              <input
+                id="telegram"
+                type="text"
+                value={telegram}
+                onChange={(e) => setTelegram(e.target.value)}
+                placeholder="@username"
+                className={inputClass}
+              />
+            </div>
             <div>
               <label htmlFor="linkedin" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
                 LinkedIn URL

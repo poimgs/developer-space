@@ -1,8 +1,23 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { RSVPWithMember } from '../../types';
 import GuestList from '../GuestList';
+
+vi.mock('../../api/client', () => ({
+  api: {
+    getPublicProfile: vi.fn().mockResolvedValue({ data: null }),
+  },
+  ApiError: class ApiError extends Error {
+    status: number;
+    body: { error: string };
+    constructor(status: number, body: { error: string }) {
+      super(body.error);
+      this.status = status;
+      this.body = body;
+    }
+  },
+}));
 
 function makeRSVP(overrides: Partial<RSVPWithMember> = {}): RSVPWithMember {
   return {
@@ -28,11 +43,10 @@ describe('GuestList', () => {
     expect(screen.getByText('No RSVPs yet. Be the first!')).toBeInTheDocument();
   });
 
-  it('renders member names as links to profiles', () => {
+  it('renders member names as clickable buttons', () => {
     renderGuestList([makeRSVP({ member: { id: 'm1', name: 'Alice', telegram_handle: null } })]);
-    const link = screen.getByText('Alice').closest('a');
-    expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute('href', '/profile/m1');
+    const button = screen.getByRole('button', { name: 'Alice' });
+    expect(button).toBeInTheDocument();
   });
 
   it('renders telegram handle without extra @', () => {
@@ -54,13 +68,12 @@ describe('GuestList', () => {
       makeRSVP({ member: { id: 'm1', name: 'Dave', telegram_handle: null } }),
     ]);
     const listItem = container.querySelector('li');
-    // One anchor (name link) and no span (no telegram)
     const spans = listItem?.querySelectorAll('span') ?? [];
     expect(spans).toHaveLength(0);
     expect(screen.getByText('Dave')).toBeInTheDocument();
   });
 
-  it('renders multiple guests with correct profile links', () => {
+  it('renders multiple guests as buttons', () => {
     const rsvps = [
       makeRSVP({ id: 'r1', member: { id: 'm1', name: 'Alice', telegram_handle: null } }),
       makeRSVP({ id: 'r2', member: { id: 'm2', name: 'Bob', telegram_handle: '@bob' } }),
@@ -68,8 +81,8 @@ describe('GuestList', () => {
     ];
     renderGuestList(rsvps);
 
-    expect(screen.getByText('Alice').closest('a')).toHaveAttribute('href', '/profile/m1');
-    expect(screen.getByText('Bob').closest('a')).toHaveAttribute('href', '/profile/m2');
-    expect(screen.getByText('Carol').closest('a')).toHaveAttribute('href', '/profile/m3');
+    expect(screen.getByRole('button', { name: 'Alice' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Bob' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Carol' })).toBeInTheDocument();
   });
 });

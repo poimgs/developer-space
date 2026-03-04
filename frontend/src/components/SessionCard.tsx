@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import type { RSVPWithMember, SpaceSession } from '../types';
 import ConfirmModal from './ConfirmModal';
+import ProfileModal from './ProfileModal';
 
 interface SessionCardProps {
   session: SpaceSession;
@@ -18,6 +19,8 @@ export default function SessionCard({ session, attendees, onRSVP, onCancelRSVP, 
   const { user } = useAuth();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [cancelSessionOpen, setCancelSessionOpen] = useState(false);
+  const [profileMemberId, setProfileMemberId] = useState<string | null>(null);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
 
   const isCanceled = session.status === 'canceled';
   const isAdmin = user?.is_admin ?? false;
@@ -154,13 +157,18 @@ export default function SessionCard({ session, attendees, onRSVP, onCancelRSVP, 
               <p className="mb-1.5 text-xs font-medium text-stone-500 dark:text-stone-400">Who's going</p>
               <div className="flex flex-wrap gap-1.5">
                 {attendees.slice(0, 5).map((rsvp) => (
-                  <span
+                  <button
                     key={rsvp.id}
+                    type="button"
                     title={rsvp.member.telegram_handle ? `@${rsvp.member.telegram_handle}` : rsvp.member.name}
-                    className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
+                    onClick={() => {
+                      setProfileMemberId(rsvp.member.id);
+                      setProfileModalOpen(true);
+                    }}
+                    className="inline-flex cursor-pointer items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
                   >
                     {rsvp.member.name}
-                  </span>
+                  </button>
                 ))}
                 {attendees.length > 5 && (
                   <span className="inline-flex items-center rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-500 dark:bg-stone-700 dark:text-stone-400">
@@ -192,6 +200,12 @@ export default function SessionCard({ session, attendees, onRSVP, onCancelRSVP, 
           onCancelSession?.(session.id);
         }}
         onCancel={() => setCancelSessionOpen(false)}
+      />
+
+      <ProfileModal
+        open={profileModalOpen}
+        memberId={profileMemberId}
+        onClose={() => setProfileModalOpen(false)}
       />
     </>
   );
