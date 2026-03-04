@@ -5,7 +5,6 @@ import { api, ApiError } from '../api/client';
 import CancelScopeModal from '../components/CancelScopeModal';
 import ConfirmModal from '../components/ConfirmModal';
 import GuestList from '../components/GuestList';
-import ImageUpload from '../components/ImageUpload';
 import StatusBadge from '../components/StatusBadge';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -214,29 +213,6 @@ export default function SessionDetailPage() {
           )}
         </div>
       </div>
-
-      {/* Admin image upload */}
-      {isAdmin && !isCanceled && (
-        <div className="mt-6 rounded-xl border border-stone-200 bg-white p-6 dark:border-stone-700 dark:bg-stone-800">
-          <h2 className="mb-3 text-lg font-semibold text-stone-900 dark:text-stone-100">Session Image</h2>
-          <ImageUpload
-            sessionId={session.id}
-            currentImageUrl={session.image_url}
-            onUpload={(imageUrl) => {
-              queryClient.setQueryData<SpaceSession>(['session', id], (old) =>
-                old ? { ...old, image_url: imageUrl } : old,
-              );
-              queryClient.invalidateQueries({ queryKey: ['sessions'] });
-            }}
-            onRemove={() => {
-              queryClient.setQueryData<SpaceSession>(['session', id], (old) =>
-                old ? { ...old, image_url: null } : old,
-              );
-              queryClient.invalidateQueries({ queryKey: ['sessions'] });
-            }}
-          />
-        </div>
-      )}
 
       <div className="mt-6 rounded-xl border border-stone-200 bg-white p-6 dark:border-stone-700 dark:bg-stone-800">
         <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">Guest List</h2>

@@ -63,16 +63,17 @@ describe('ImageUpload', () => {
     expect(screen.getByText('JPEG, PNG, or WebP, max 5MB')).toBeInTheDocument();
   });
 
-  it('has accessible upload button role', () => {
-    renderUpload();
-    expect(screen.getByRole('button', { name: 'Upload session image' })).toBeInTheDocument();
-  });
-
-  it('renders hidden file input with correct accept attribute', () => {
+  it('has label associated with file input', () => {
     renderUpload();
     const input = screen.getByLabelText('Upload session image', { selector: 'input' });
-    expect(input).toHaveAttribute('accept', 'image/jpeg,image/png,image/webp');
-    expect(input).toHaveClass('hidden');
+    expect(input).toHaveAttribute('id', 'image-upload-session-session-1');
+  });
+
+  it('renders visually-hidden file input with correct accept attribute', () => {
+    renderUpload();
+    const input = screen.getByLabelText('Upload session image', { selector: 'input' });
+    expect(input).toHaveAttribute('accept', 'image/jpeg,image/png,image/webp,image/*');
+    expect(input).toHaveClass('sr-only');
   });
 
   // --- Existing image state ---
@@ -256,14 +257,14 @@ describe('ImageUpload', () => {
     expect(screen.getByText('Uploading...')).toBeInTheDocument();
   });
 
-  it('disables Replace and Remove buttons during removal', async () => {
+  it('disables Replace and Remove during removal', async () => {
     mockDelete.mockReturnValue(new Promise(() => {}));
 
     const user = userEvent.setup();
     renderUpload({ currentImageUrl: '/uploads/sessions/test.jpg' });
     await user.click(screen.getByText('Remove'));
 
-    expect(screen.getByText('Replace')).toBeDisabled();
+    expect(screen.getByText('Replace')).toHaveClass('pointer-events-none');
     expect(screen.getByText('Remove')).toBeDisabled();
   });
 });

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api, ApiError } from '../api/client';
 import EditScopeModal from '../components/EditScopeModal';
+import ImageUpload from '../components/ImageUpload';
 import SessionForm from '../components/SessionForm';
 import { useToast } from '../context/ToastContext';
 import type { APIResponse, SpaceSession, UpdateSessionRequest, UpdateSeriesRequest } from '../types';
@@ -108,6 +109,27 @@ export default function SessionEditPage() {
           onSubmit={handleSubmit}
           loading={singleMutation.isPending || seriesMutation.isPending}
           hideDate={isSeriesEdit}
+        />
+      </div>
+
+      <div className="mt-6 rounded-xl border border-stone-200 bg-white p-6 dark:border-stone-700 dark:bg-stone-800">
+        <h2 className="mb-3 text-lg font-semibold text-stone-900 dark:text-stone-100">Session Image</h2>
+        <ImageUpload
+          sessionId={isSeriesEdit ? undefined : session.id}
+          seriesId={isSeriesEdit ? session.series_id! : undefined}
+          currentImageUrl={session.image_url}
+          onUpload={(imageUrl) => {
+            queryClient.setQueryData<SpaceSession>(['session', id], (old) =>
+              old ? { ...old, image_url: imageUrl } : old,
+            );
+            queryClient.invalidateQueries({ queryKey: ['sessions'] });
+          }}
+          onRemove={() => {
+            queryClient.setQueryData<SpaceSession>(['session', id], (old) =>
+              old ? { ...old, image_url: null } : old,
+            );
+            queryClient.invalidateQueries({ queryKey: ['sessions'] });
+          }}
         />
       </div>
 

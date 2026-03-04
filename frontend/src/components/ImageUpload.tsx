@@ -18,6 +18,7 @@ export default function ImageUpload({ sessionId, seriesId, currentImageUrl, onUp
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const inputId = seriesId ? `image-upload-series-${seriesId}` : `image-upload-session-${sessionId}`;
 
   function validateFile(file: File): string | null {
     if (!ALLOWED_TYPES.includes(file.type)) {
@@ -57,19 +58,19 @@ export default function ImageUpload({ sessionId, seriesId, currentImageUrl, onUp
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
-  function handleDrop(e: DragEvent<HTMLDivElement>) {
+  function handleDrop(e: DragEvent<HTMLElement>) {
     e.preventDefault();
     setDragOver(false);
     const file = e.dataTransfer.files[0];
     if (file) handleFile(file);
   }
 
-  function handleDragOver(e: DragEvent<HTMLDivElement>) {
+  function handleDragOver(e: DragEvent<HTMLElement>) {
     e.preventDefault();
     setDragOver(true);
   }
 
-  function handleDragLeave(e: DragEvent<HTMLDivElement>) {
+  function handleDragLeave(e: DragEvent<HTMLElement>) {
     e.preventDefault();
     setDragOver(false);
   }
@@ -100,13 +101,12 @@ export default function ImageUpload({ sessionId, seriesId, currentImageUrl, onUp
           className="w-full h-40 object-cover"
         />
         <div className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-            className="rounded-md bg-white px-3 py-1.5 text-sm font-medium text-stone-700 mr-2 disabled:opacity-50"
+          <label
+            htmlFor={uploading ? undefined : inputId}
+            className={`rounded-md bg-white px-3 py-1.5 text-sm font-medium text-stone-700 mr-2 cursor-pointer ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
           >
             Replace
-          </button>
+          </label>
           <button
             onClick={handleRemove}
             disabled={uploading}
@@ -116,11 +116,12 @@ export default function ImageUpload({ sessionId, seriesId, currentImageUrl, onUp
           </button>
         </div>
         <input
+          id={inputId}
           ref={fileInputRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp"
+          accept="image/jpeg,image/png,image/webp,image/*"
           onChange={handleInputChange}
-          className="hidden"
+          className="sr-only"
           aria-label="Upload session image"
         />
       </div>
@@ -129,18 +130,16 @@ export default function ImageUpload({ sessionId, seriesId, currentImageUrl, onUp
 
   return (
     <div>
-      <div
-        onClick={() => !uploading && fileInputRef.current?.click()}
+      <label
+        htmlFor={uploading ? undefined : inputId}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
-        className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
+        className={`block border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
           dragOver
             ? 'border-amber-500 bg-amber-50 dark:border-amber-400 dark:bg-amber-900/20'
             : 'border-stone-300 hover:border-amber-500 dark:border-stone-600 dark:hover:border-amber-400'
         } ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
-        role="button"
-        aria-label="Upload session image"
       >
         {uploading ? (
           <div className="flex flex-col items-center">
@@ -156,13 +155,14 @@ export default function ImageUpload({ sessionId, seriesId, currentImageUrl, onUp
             <p className="mt-1 text-xs text-stone-400 dark:text-stone-500">JPEG, PNG, or WebP, max 5MB</p>
           </>
         )}
-      </div>
+      </label>
       <input
+        id={inputId}
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp"
+        accept="image/jpeg,image/png,image/webp,image/*"
         onChange={handleInputChange}
-        className="hidden"
+        className="sr-only"
         aria-label="Upload session image"
       />
     </div>
