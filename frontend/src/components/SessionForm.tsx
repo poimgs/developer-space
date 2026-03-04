@@ -6,6 +6,7 @@ interface SessionFormProps {
   onSubmit: (data: CreateSessionRequest | UpdateSessionRequest) => Promise<void>;
   loading?: boolean;
   hideDate?: boolean;
+  children?: React.ReactNode;
 }
 
 interface FormErrors {
@@ -16,7 +17,7 @@ interface FormErrors {
   repeat_weekly?: string;
 }
 
-export default function SessionForm({ session, onSubmit, loading, hideDate }: SessionFormProps) {
+export default function SessionForm({ session, onSubmit, loading, hideDate, children }: SessionFormProps) {
   const isEdit = !!session;
 
   const [title, setTitle] = useState(session?.title ?? '');
@@ -275,6 +276,8 @@ export default function SessionForm({ session, onSubmit, loading, hideDate }: Se
           )}
         </div>
       )}
+
+      {children}
 
       <div className="flex justify-end pt-2">
         <button

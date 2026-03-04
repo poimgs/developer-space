@@ -109,28 +109,30 @@ export default function SessionEditPage() {
           onSubmit={handleSubmit}
           loading={singleMutation.isPending || seriesMutation.isPending}
           hideDate={isSeriesEdit}
-        />
-      </div>
-
-      <div className="mt-6 rounded-xl border border-stone-200 bg-white p-6 dark:border-stone-700 dark:bg-stone-800">
-        <h2 className="mb-3 text-lg font-semibold text-stone-900 dark:text-stone-100">Session Image</h2>
-        <ImageUpload
-          sessionId={isSeriesEdit ? undefined : session.id}
-          seriesId={isSeriesEdit ? session.series_id! : undefined}
-          currentImageUrl={session.image_url}
-          onUpload={(imageUrl) => {
-            queryClient.setQueryData<SpaceSession>(['session', id], (old) =>
-              old ? { ...old, image_url: imageUrl } : old,
-            );
-            queryClient.invalidateQueries({ queryKey: ['sessions'] });
-          }}
-          onRemove={() => {
-            queryClient.setQueryData<SpaceSession>(['session', id], (old) =>
-              old ? { ...old, image_url: null } : old,
-            );
-            queryClient.invalidateQueries({ queryKey: ['sessions'] });
-          }}
-        />
+        >
+          <div>
+            <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">Image</label>
+            <div className="mt-1">
+              <ImageUpload
+                sessionId={isSeriesEdit ? undefined : session.id}
+                seriesId={isSeriesEdit ? session.series_id! : undefined}
+                currentImageUrl={session.image_url}
+                onUpload={(imageUrl) => {
+                  queryClient.setQueryData<SpaceSession>(['session', id], (old) =>
+                    old ? { ...old, image_url: imageUrl } : old,
+                  );
+                  queryClient.invalidateQueries({ queryKey: ['sessions'] });
+                }}
+                onRemove={() => {
+                  queryClient.setQueryData<SpaceSession>(['session', id], (old) =>
+                    old ? { ...old, image_url: null } : old,
+                  );
+                  queryClient.invalidateQueries({ queryKey: ['sessions'] });
+                }}
+              />
+            </div>
+          </div>
+        </SessionForm>
       </div>
 
       <EditScopeModal
