@@ -1,8 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import ThemeToggle from './ThemeToggle';
-import { isDarkMode, toggleTheme } from '../lib/darkMode';
 
 function NavLink({
   to,
@@ -57,22 +55,9 @@ const LogoutIcon = (
   </svg>
 );
 
-const SunIcon = (
-  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
-  </svg>
-);
-
-const MoonIcon = (
-  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
-  </svg>
-);
-
 export default function Layout() {
   const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [dark, setDark] = useState(isDarkMode);
   const navRef = useRef<HTMLElement>(null);
 
   const closeMenu = useCallback(() => setMenuOpen(false), []);
@@ -101,13 +86,6 @@ export default function Layout() {
     };
   }, [menuOpen]);
 
-  const handleThemeChange = useCallback((toDark: boolean) => {
-    if (toDark !== isDarkMode()) {
-      toggleTheme();
-    }
-    setDark(toDark);
-  }, []);
-
   return (
     <div className="min-h-screen">
       <nav ref={navRef} className="border-b border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
@@ -123,7 +101,6 @@ export default function Layout() {
           </div>
 
           <div className="hidden items-center gap-2 md:flex">
-            <ThemeToggle />
             <NavLink to="/profile">Profile</NavLink>
             <button
               onClick={logout}
@@ -175,38 +152,7 @@ export default function Layout() {
                 </NavLink>
               </div>
 
-              {/* Section 2: Theme pill */}
-              <div className="border-t border-stone-200 pt-3 mt-3 dark:border-stone-700">
-                <span className="block px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500">
-                  Theme
-                </span>
-                <div className="mx-3 flex rounded-lg border border-stone-200 bg-stone-100 p-1 dark:border-stone-600 dark:bg-stone-800">
-                  <button
-                    onClick={() => handleThemeChange(false)}
-                    className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                      !dark
-                        ? 'bg-white text-stone-900 shadow-sm dark:bg-stone-600 dark:text-stone-100'
-                        : 'text-stone-500 dark:text-stone-400'
-                    }`}
-                  >
-                    {SunIcon}
-                    Light
-                  </button>
-                  <button
-                    onClick={() => handleThemeChange(true)}
-                    className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                      dark
-                        ? 'bg-white text-stone-900 shadow-sm dark:bg-stone-600 dark:text-stone-100'
-                        : 'text-stone-500 dark:text-stone-400'
-                    }`}
-                  >
-                    {MoonIcon}
-                    Dark
-                  </button>
-                </div>
-              </div>
-
-              {/* Section 3: Logout */}
+              {/* Section 2: Logout */}
               <div className="border-t border-stone-200 pt-3 mt-3 dark:border-stone-700">
                 <button
                   onClick={() => { closeMenu(); logout(); }}
