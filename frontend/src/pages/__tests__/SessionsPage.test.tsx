@@ -362,4 +362,50 @@ describe('SessionsPage', () => {
       expect(screen.getByText('WeWork Floor 3')).toBeInTheDocument();
     });
   });
+
+  it('displays month label above date strip', async () => {
+    setupApiMock([makeSession({ date: '2026-03-06' })]);
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText('March 2026')).toBeInTheDocument();
+    });
+  });
+
+  it('navigates between months and shows correct sessions', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const sessions = [
+      makeSession({ id: 's-feb', date: '2026-02-25', title: 'February Session' }),
+      makeSession({ id: 's-mar', date: '2026-03-06', title: 'March Session' }),
+    ];
+    setupApiMock(sessions);
+    renderPage();
+
+    // Default month is March (nearest upcoming date)
+    await waitFor(() => {
+      expect(screen.getByText('March 2026')).toBeInTheDocument();
+    });
+    expect(screen.getByText('March Session')).toBeInTheDocument();
+
+    // Navigate to previous month (February)
+    await user.click(screen.getByLabelText('Previous month'));
+
+    await waitFor(() => {
+      expect(screen.getByText('February 2026')).toBeInTheDocument();
+    });
+    expect(screen.getByText('February Session')).toBeInTheDocument();
+    expect(screen.queryByText('March Session')).not.toBeInTheDocument();
+  });
+
+  it('disables month arrows at boundaries', async () => {
+    setupApiMock([makeSession({ date: '2026-03-06' })]);
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText('March 2026')).toBeInTheDocument();
+    });
+    // Only one month with sessions — both arrows should be disabled
+    expect(screen.getByLabelText('Previous month')).toBeDisabled();
+    expect(screen.getByLabelText('Next month')).toBeDisabled();
+  });
 });

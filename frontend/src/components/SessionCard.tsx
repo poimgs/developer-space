@@ -42,7 +42,7 @@ export default function SessionCard({ session, attendees, onRSVP, onCancelRSVP, 
   return (
     <>
       <div
-        className={`rounded-xl border border-stone-200 bg-white shadow-sm dark:border-stone-700 dark:bg-stone-800 ${isCanceled ? 'opacity-60' : ''} ${!isHero ? 'p-5' : ''}`}
+        className={`mx-auto max-w-2xl rounded-xl border border-stone-200 bg-white shadow-sm dark:border-stone-700 dark:bg-stone-800 ${isCanceled ? 'opacity-60' : ''} ${!isHero ? 'p-5' : ''}`}
       >
         {/* Hero image */}
         {isHero && session.image_url && (

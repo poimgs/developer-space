@@ -44,6 +44,52 @@ export default function SessionsPage() {
   const [selectedDate, setSelectedDate] = useState<string>('');
   const activeDate = selectedDate || defaultDate;
 
+  // Derive available months from date chips
+  const availableMonths = useMemo(() => {
+    const months = new Set<string>();
+    for (const chip of dateChips) {
+      months.add(chip.date.slice(0, 7));
+    }
+    return Array.from(months).sort();
+  }, [dateChips]);
+
+  const defaultMonth = useMemo(() => defaultDate.slice(0, 7), [defaultDate]);
+  const [selectedMonth, setSelectedMonth] = useState<string>('');
+  const activeMonth = selectedMonth || defaultMonth;
+
+  // Filter date chips to active month
+  const monthDateChips = useMemo(
+    () => dateChips.filter((c) => c.date.startsWith(activeMonth)),
+    [dateChips, activeMonth],
+  );
+
+  // Format month label (e.g., "March 2026")
+  const monthLabel = useMemo(() => {
+    if (!activeMonth) return '';
+    const d = new Date(activeMonth + '-01T00:00:00');
+    return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  }, [activeMonth]);
+
+  const monthIndex = availableMonths.indexOf(activeMonth);
+
+  function handlePrevMonth() {
+    if (monthIndex > 0) {
+      const newMonth = availableMonths[monthIndex - 1];
+      setSelectedMonth(newMonth);
+      const firstDate = dateChips.find((c) => c.date.startsWith(newMonth));
+      if (firstDate) setSelectedDate(firstDate.date);
+    }
+  }
+
+  function handleNextMonth() {
+    if (monthIndex < availableMonths.length - 1) {
+      const newMonth = availableMonths[monthIndex + 1];
+      setSelectedMonth(newMonth);
+      const firstDate = dateChips.find((c) => c.date.startsWith(newMonth));
+      if (firstDate) setSelectedDate(firstDate.date);
+    }
+  }
+
   // Sessions for the selected date
   const selectedSessions = useMemo(
     () => sessions.filter((s) => s.date === activeDate),
@@ -191,9 +237,14 @@ export default function SessionsPage() {
       )}
 
       <DateStrip
-        dates={dateChips}
+        dates={monthDateChips}
         selected={activeDate}
         onSelect={setSelectedDate}
+        monthLabel={monthLabel}
+        onPrevMonth={handlePrevMonth}
+        onNextMonth={handleNextMonth}
+        prevDisabled={monthIndex <= 0}
+        nextDisabled={monthIndex >= availableMonths.length - 1}
       />
 
       <div className="space-y-4">
