@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import type { RSVPWithMember, SpaceSession } from '../types';
 import ConfirmModal from './ConfirmModal';
-import StatusBadge from './StatusBadge';
 
 interface SessionCardProps {
   session: SpaceSession;
@@ -69,7 +68,6 @@ export default function SessionCard({ session, attendees, onRSVP, onCancelRSVP, 
                 </span>
               )}
             </div>
-            <StatusBadge status={session.status} />
           </div>
 
           {/* Time */}

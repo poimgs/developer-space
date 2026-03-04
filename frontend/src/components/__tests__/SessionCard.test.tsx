@@ -51,11 +51,6 @@ describe('SessionCard', () => {
     expect(screen.getByText('3 attending')).toBeInTheDocument();
   });
 
-  it('renders status badge', () => {
-    renderCard(makeSession({ status: 'shifted' }));
-    expect(screen.getByText('Rescheduled')).toBeInTheDocument();
-  });
-
   it('shows RSVP button when not RSVPed', () => {
     renderCard(makeSession({ user_rsvped: false, rsvp_count: 3 }));
     expect(screen.getByRole('button', { name: 'RSVP' })).toBeInTheDocument();

@@ -5,7 +5,6 @@ import { api, ApiError } from '../api/client';
 import CancelScopeModal from '../components/CancelScopeModal';
 import ConfirmModal from '../components/ConfirmModal';
 import GuestList from '../components/GuestList';
-import StatusBadge from '../components/StatusBadge';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import type { APIResponse, RSVP, RSVPWithMember, SpaceSession } from '../types';
@@ -141,7 +140,6 @@ export default function SessionDetailPage() {
                   Recurring
                 </span>
               )}
-              <StatusBadge status={session.status} />
             </div>
           </div>
 
