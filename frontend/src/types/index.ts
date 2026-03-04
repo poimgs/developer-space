@@ -124,6 +124,7 @@ export interface UpdateSeriesRequest {
   description?: string | null;
   start_time?: string;
   end_time?: string;
+  image_url?: string | null;
   location?: string | null;
 }
 

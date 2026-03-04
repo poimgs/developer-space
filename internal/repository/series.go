@@ -167,6 +167,11 @@ func (r *SeriesRepository) Update(ctx context.Context, id uuid.UUID, req model.U
 		args = append(args, *req.EndTime)
 		argIdx++
 	}
+	if req.ImageURL != nil {
+		setClauses = append(setClauses, fmt.Sprintf("image_url = $%d", argIdx))
+		args = append(args, *req.ImageURL)
+		argIdx++
+	}
 	if req.Location != nil {
 		setClauses = append(setClauses, fmt.Sprintf("location = $%d", argIdx))
 		args = append(args, *req.Location)

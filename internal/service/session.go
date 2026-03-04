@@ -289,7 +289,7 @@ func (s *SessionService) UpdateSeries(ctx context.Context, seriesID uuid.UUID, r
 		EndTime:     req.EndTime,
 		Location:    req.Location,
 	}
-	_, err = s.repo.UpdateBulkBySeriesID(ctx, seriesID, sessionReq, nil)
+	_, err = s.repo.UpdateBulkBySeriesID(ctx, seriesID, sessionReq, req.ImageURL)
 	if err != nil {
 		return nil, fmt.Errorf("propagating series update: %w", err)
 	}

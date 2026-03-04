@@ -27,5 +27,6 @@ type UpdateSeriesRequest struct {
 	Description *string `json:"description"`
 	StartTime   *string `json:"start_time"`
 	EndTime     *string `json:"end_time"`
+	ImageURL    *string `json:"image_url"`
 	Location    *string `json:"location"`
 }
