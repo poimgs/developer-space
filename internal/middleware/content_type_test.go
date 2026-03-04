@@ -78,6 +78,22 @@ func TestContentType_AllowsJSON_WithCharset(t *testing.T) {
 	}
 }
 
+func TestContentType_AllowsMultipartFormData_POST(t *testing.T) {
+	handler := ContentType(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("POST", "/test", strings.NewReader("--boundary\r\n"))
+	req.Header.Set("Content-Type", "multipart/form-data; boundary=boundary")
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("status = %d, want %d", w.Code, http.StatusOK)
+	}
+}
+
 func TestContentType_AllowsGET(t *testing.T) {
 	handler := ContentType(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

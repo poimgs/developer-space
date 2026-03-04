@@ -9,7 +9,8 @@ RUN CGO_ENABLED=0 go build -o /api ./cmd/api
 # Runtime stage
 FROM alpine:3.19
 RUN apk add --no-cache ca-certificates
-COPY --from=builder /api /api
-COPY migrations/ /migrations/
+WORKDIR /app
+COPY --from=builder /api /app/api
+COPY migrations/ /app/migrations/
 EXPOSE 8080
-CMD ["/api"]
+CMD ["/app/api"]
