@@ -21,7 +21,6 @@ import (
 	"github.com/developer-space/api/internal/repository"
 	"github.com/developer-space/api/internal/response"
 	"github.com/developer-space/api/internal/service"
-	"github.com/developer-space/api/internal/telegram"
 )
 
 func main() {
@@ -78,20 +77,14 @@ func main() {
 	rsvpRepo := repository.NewRSVPRepository(pool)
 
 	emailSender := service.NewResendEmailSender(cfg.ResendAPIKey, cfg.ResendFromEmail)
-	telegramSvc := telegram.NewTelegramService(cfg.TelegramBotToken, cfg.TelegramChatID)
-	var notifier service.Notifier
-	if telegramSvc.Enabled() {
-		notifier = telegram.NewTelegramNotifier(telegramSvc)
-		slog.Info("telegram notifications enabled")
-	} else {
-		notifier = &service.NoopNotifier{}
-		slog.Info("telegram notifications disabled (credentials not configured)")
-	}
+	// Notifications disabled for now
+	var notifier service.Notifier = &service.NoopNotifier{}
+	slog.Info("all notifications disabled")
 	memberSvc := service.NewMemberService(memberRepo, emailSender, cfg.FrontendURL)
 	authSvc := service.NewAuthService(tokenRepo, memberRepo, emailSender, cfg.SessionSecret, cfg.FrontendURL, cfg.IsSecure())
 	sessionSvc := service.NewSessionService(sessionRepo, notifier)
 	sessionSvc.SetSeriesRepo(seriesRepo)
-	sessionSvc.SetEmailNotifier(emailSender, rsvpRepo)
+	// sessionSvc.SetEmailNotifier(emailSender, rsvpRepo) // notifications disabled for now
 	rsvpSvc := service.NewRSVPService(rsvpRepo, memberRepo, notifier)
 
 	// Ensure uploads directory exists
