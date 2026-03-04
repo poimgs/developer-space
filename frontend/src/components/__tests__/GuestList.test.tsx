@@ -23,7 +23,7 @@ function makeRSVP(overrides: Partial<RSVPWithMember> = {}): RSVPWithMember {
   return {
     id: 'rsvp-1',
     session_id: 'session-1',
-    member: { id: 'member-1', name: 'Alice', telegram_handle: null },
+    member: { id: 'member-1', name: 'Alice', telegram_handle: null, bio: null },
     created_at: '2026-03-01T10:00:00Z',
     ...overrides,
   };
@@ -44,28 +44,21 @@ describe('GuestList', () => {
   });
 
   it('renders member names as clickable buttons', () => {
-    renderGuestList([makeRSVP({ member: { id: 'm1', name: 'Alice', telegram_handle: null } })]);
+    renderGuestList([makeRSVP({ member: { id: 'm1', name: 'Alice', telegram_handle: null, bio: null } })]);
     const button = screen.getByRole('button', { name: 'Alice' });
     expect(button).toBeInTheDocument();
   });
 
-  it('renders telegram handle without extra @', () => {
+  it('renders bio when present', () => {
     renderGuestList([
-      makeRSVP({ member: { id: 'm1', name: 'Bob', telegram_handle: '@bobdev' } }),
+      makeRSVP({ member: { id: 'm1', name: 'Bob', telegram_handle: null, bio: 'Full-stack developer' } }),
     ]);
-    expect(screen.getByText('@bobdev')).toBeInTheDocument();
+    expect(screen.getByText('Full-stack developer')).toBeInTheDocument();
   });
 
-  it('handles telegram handle already without @', () => {
-    renderGuestList([
-      makeRSVP({ member: { id: 'm1', name: 'Carol', telegram_handle: 'carol' } }),
-    ]);
-    expect(screen.getByText('@carol')).toBeInTheDocument();
-  });
-
-  it('does not show telegram handle when null', () => {
+  it('does not show bio when null', () => {
     const { container } = renderGuestList([
-      makeRSVP({ member: { id: 'm1', name: 'Dave', telegram_handle: null } }),
+      makeRSVP({ member: { id: 'm1', name: 'Dave', telegram_handle: null, bio: null } }),
     ]);
     const listItem = container.querySelector('li');
     const spans = listItem?.querySelectorAll('span') ?? [];
@@ -75,9 +68,9 @@ describe('GuestList', () => {
 
   it('renders multiple guests as buttons', () => {
     const rsvps = [
-      makeRSVP({ id: 'r1', member: { id: 'm1', name: 'Alice', telegram_handle: null } }),
-      makeRSVP({ id: 'r2', member: { id: 'm2', name: 'Bob', telegram_handle: '@bob' } }),
-      makeRSVP({ id: 'r3', member: { id: 'm3', name: 'Carol', telegram_handle: null } }),
+      makeRSVP({ id: 'r1', member: { id: 'm1', name: 'Alice', telegram_handle: null, bio: null } }),
+      makeRSVP({ id: 'r2', member: { id: 'm2', name: 'Bob', telegram_handle: null, bio: 'Designer' } }),
+      makeRSVP({ id: 'r3', member: { id: 'm3', name: 'Carol', telegram_handle: null, bio: null } }),
     ];
     renderGuestList(rsvps);
 

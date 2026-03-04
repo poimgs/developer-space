@@ -160,7 +160,7 @@ export default function SessionCard({ session, attendees, onRSVP, onCancelRSVP, 
                   <button
                     key={rsvp.id}
                     type="button"
-                    title={rsvp.member.telegram_handle ? `@${rsvp.member.telegram_handle}` : rsvp.member.name}
+                    title={rsvp.member.bio || rsvp.member.name}
                     onClick={() => {
                       setProfileMemberId(rsvp.member.id);
                       setProfileModalOpen(true);

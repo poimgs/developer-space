@@ -33,9 +33,9 @@ export default function GuestList({ rsvps }: GuestListProps) {
             >
               {rsvp.member.name}
             </button>
-            {rsvp.member.telegram_handle && (
-              <span className="text-sm text-stone-500 dark:text-stone-400">
-                @{rsvp.member.telegram_handle.replace(/^@/, '')}
+            {rsvp.member.bio && (
+              <span className="text-sm text-stone-500 dark:text-stone-400 truncate max-w-[200px]">
+                {rsvp.member.bio}
               </span>
             )}
           </li>

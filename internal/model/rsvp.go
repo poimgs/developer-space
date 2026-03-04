@@ -24,6 +24,7 @@ type RSVPMember struct {
 	ID             uuid.UUID `json:"id"`
 	Name           string    `json:"name"`
 	TelegramHandle *string   `json:"telegram_handle"`
+	Bio            *string   `json:"bio"`
 }
 
 // RSVPRecipient contains the minimum member info needed for email notifications.

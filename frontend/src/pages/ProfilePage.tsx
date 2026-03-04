@@ -145,15 +145,15 @@ export default function ProfilePage() {
           <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">Social Links</h2>
           <div className="mt-4 space-y-4">
             <div>
-              <label htmlFor="telegram" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-                Telegram Handle
+              <label htmlFor="github" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
+                GitHub Username
               </label>
               <input
-                id="telegram"
+                id="github"
                 type="text"
-                value={telegram}
-                onChange={(e) => setTelegram(e.target.value)}
-                placeholder="@username"
+                value={githubUsername}
+                onChange={(e) => setGithubUsername(e.target.value)}
+                placeholder="username"
                 className={inputClass}
               />
             </div>
@@ -171,6 +171,19 @@ export default function ProfilePage() {
               />
             </div>
             <div>
+              <label htmlFor="telegram" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
+                Telegram Handle
+              </label>
+              <input
+                id="telegram"
+                type="text"
+                value={telegram}
+                onChange={(e) => setTelegram(e.target.value)}
+                placeholder="@username"
+                className={inputClass}
+              />
+            </div>
+            <div>
               <label htmlFor="instagram" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
                 Instagram Handle
               </label>
@@ -179,19 +192,6 @@ export default function ProfilePage() {
                 type="text"
                 value={instagramHandle}
                 onChange={(e) => setInstagramHandle(e.target.value)}
-                placeholder="username"
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label htmlFor="github" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-                GitHub Username
-              </label>
-              <input
-                id="github"
-                type="text"
-                value={githubUsername}
-                onChange={(e) => setGithubUsername(e.target.value)}
                 placeholder="username"
                 className={inputClass}
               />

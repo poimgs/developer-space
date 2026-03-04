@@ -154,7 +154,7 @@ func (r *RSVPRepository) ListBySession(ctx context.Context, sessionID uuid.UUID)
 	}
 
 	rows, err := r.pool.Query(ctx,
-		`SELECT r.id, r.session_id, m.id, m.name, m.telegram_handle, r.created_at
+		`SELECT r.id, r.session_id, m.id, m.name, m.telegram_handle, m.bio, r.created_at
 		 FROM rsvps r
 		 JOIN members m ON m.id = r.member_id
 		 WHERE r.session_id = $1
@@ -168,7 +168,7 @@ func (r *RSVPRepository) ListBySession(ctx context.Context, sessionID uuid.UUID)
 	var rsvps []model.RSVPWithMember
 	for rows.Next() {
 		var rv model.RSVPWithMember
-		if err := rows.Scan(&rv.ID, &rv.SessionID, &rv.Member.ID, &rv.Member.Name, &rv.Member.TelegramHandle, &rv.CreatedAt); err != nil {
+		if err := rows.Scan(&rv.ID, &rv.SessionID, &rv.Member.ID, &rv.Member.Name, &rv.Member.TelegramHandle, &rv.Member.Bio, &rv.CreatedAt); err != nil {
 			return nil, fmt.Errorf("scanning rsvp: %w", err)
 		}
 		rsvps = append(rsvps, rv)

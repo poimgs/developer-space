@@ -123,7 +123,7 @@ describe('Visual Refresh — Warm Palette', () => {
 
     it('uses amber for attendee pills', () => {
       const attendees: RSVPWithMember[] = [
-        { id: 'r1', session_id: 's1', member: { id: 'm1', name: 'Alice', telegram_handle: null }, created_at: '' },
+        { id: 'r1', session_id: 's1', member: { id: 'm1', name: 'Alice', telegram_handle: null, bio: null }, created_at: '' },
       ];
       render(
         <MemoryRouter>
@@ -156,7 +156,7 @@ describe('Visual Refresh — Warm Palette', () => {
 
     it('has no indigo classes anywhere in the card', () => {
       const attendees: RSVPWithMember[] = [
-        { id: 'r1', session_id: 's1', member: { id: 'm1', name: 'Alice', telegram_handle: null }, created_at: '' },
+        { id: 'r1', session_id: 's1', member: { id: 'm1', name: 'Alice', telegram_handle: null, bio: null }, created_at: '' },
       ];
       const { container } = render(
         <MemoryRouter>

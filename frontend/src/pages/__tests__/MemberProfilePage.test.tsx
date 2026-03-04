@@ -247,7 +247,7 @@ describe('MemberProfilePage', () => {
     await waitFor(() => {
       expect(screen.getByText('LinkedIn')).toBeInTheDocument();
     });
-    for (const linkText of ['Telegram', 'LinkedIn', 'Instagram', 'GitHub']) {
+    for (const linkText of ['GitHub', 'LinkedIn', 'Telegram', 'Instagram']) {
       const anchor = screen.getByText(linkText).closest('a');
       expect(anchor).toHaveAttribute('target', '_blank');
       expect(anchor).toHaveAttribute('rel', 'noopener noreferrer');

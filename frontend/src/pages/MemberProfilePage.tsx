@@ -94,19 +94,19 @@ export default function MemberProfilePage() {
         </section>
       )}
 
-      {(telegramHandle || profile.linkedin_url || profile.instagram_handle || profile.github_username) && (
+      {(profile.github_username || profile.linkedin_url || telegramHandle || profile.instagram_handle) && (
         <section className="mt-6">
           <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">Social Links</h2>
           <ul className="mt-2 space-y-2">
-            {telegramHandle && (
+            {profile.github_username && (
               <li>
                 <a
-                  href={`https://t.me/${telegramHandle}`}
+                  href={`https://github.com/${profile.github_username.replace(/^@/, '')}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
                 >
-                  Telegram
+                  GitHub
                 </a>
               </li>
             )}
@@ -122,6 +122,18 @@ export default function MemberProfilePage() {
                 </a>
               </li>
             )}
+            {telegramHandle && (
+              <li>
+                <a
+                  href={`https://t.me/${telegramHandle}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
+                >
+                  Telegram
+                </a>
+              </li>
+            )}
             {profile.instagram_handle && (
               <li>
                 <a
@@ -131,18 +143,6 @@ export default function MemberProfilePage() {
                   className="text-sm text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
                 >
                   Instagram
-                </a>
-              </li>
-            )}
-            {profile.github_username && (
-              <li>
-                <a
-                  href={`https://github.com/${profile.github_username.replace(/^@/, '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
-                >
-                  GitHub
                 </a>
               </li>
             )}

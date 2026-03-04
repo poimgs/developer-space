@@ -108,6 +108,7 @@ export interface RSVPMember {
   id: string;
   name: string;
   telegram_handle: string | null;
+  bio: string | null;
 }
 
 export interface APIResponse<T> {
