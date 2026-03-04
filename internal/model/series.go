@@ -13,10 +13,19 @@ type SessionSeries struct {
 	DayOfWeek   int       `json:"day_of_week"`
 	StartTime   string    `json:"start_time"`
 	EndTime     string    `json:"end_time"`
-	Capacity    int       `json:"capacity"`
+	ImageURL    *string   `json:"image_url"`
+	Location    *string   `json:"location"`
 	EveryNWeeks int       `json:"every_n_weeks"`
 	IsActive    bool      `json:"is_active"`
 	CreatedBy   uuid.UUID `json:"created_by"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+type UpdateSeriesRequest struct {
+	Title       *string `json:"title"`
+	Description *string `json:"description"`
+	StartTime   *string `json:"start_time"`
+	EndTime     *string `json:"end_time"`
+	Location    *string `json:"location"`
 }

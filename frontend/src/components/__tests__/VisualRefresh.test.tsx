@@ -31,7 +31,6 @@ function makeSession(overrides: Partial<SpaceSession> = {}): SpaceSession {
     date: '2026-03-06',
     start_time: '14:00',
     end_time: '18:00',
-    capacity: 8,
     status: 'scheduled',
     image_url: null,
     location: null,
@@ -142,18 +141,17 @@ describe('Visual Refresh — Warm Palette', () => {
       expect(pill.className).not.toMatch(/indigo/);
     });
 
-    it('uses amber for capacity fill bar', () => {
-      const { container } = render(
+    it('uses amber for attending count area', () => {
+      render(
         <MemoryRouter>
           <SessionCard
-            session={makeSession({ rsvp_count: 3, capacity: 8 })}
+            session={makeSession({ rsvp_count: 3 })}
             onRSVP={vi.fn()}
             onCancelRSVP={vi.fn()}
           />
         </MemoryRouter>,
       );
-      const fillBar = container.querySelector('[class*="bg-amber-500"]');
-      expect(fillBar).not.toBeNull();
+      expect(screen.getByText('3 attending')).toBeInTheDocument();
     });
 
     it('has no indigo classes anywhere in the card', () => {

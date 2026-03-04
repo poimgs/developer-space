@@ -56,6 +56,8 @@ func (n *mockRSVPNotifier) MemberRSVPed(session *model.SpaceSession, member *mod
 func (n *mockRSVPNotifier) MemberCanceledRSVP(session *model.SpaceSession, member *model.Member) {
 	n.canceledRSVPCalls++
 }
+func (n *mockRSVPNotifier) SeriesUpdated(series *model.SessionSeries, affected []model.SpaceSession) {}
+func (n *mockRSVPNotifier) SeriesCanceled(series *model.SessionSeries, canceled []model.SpaceSession) {}
 
 // --- Helpers ---
 
@@ -75,7 +77,6 @@ func testSession() *model.SpaceSession {
 		Date:      time.Now().AddDate(0, 0, 7).Format("2006-01-02"),
 		StartTime: "10:00",
 		EndTime:   "18:00",
-		Capacity:  8,
 		Status:    "scheduled",
 		CreatedBy: uuid.New(),
 		RSVPCount: 3,
@@ -145,16 +146,6 @@ func TestRSVPService_Create_SessionPast(t *testing.T) {
 	_, err := svc.Create(context.Background(), uuid.New(), uuid.New())
 	if !errors.Is(err, ErrRSVPSessionPast) {
 		t.Fatalf("expected ErrRSVPSessionPast, got %v", err)
-	}
-}
-
-func TestRSVPService_Create_SessionFull(t *testing.T) {
-	repo := &mockRSVPRepo{createErr: repository.ErrRSVPSessionFull}
-	svc := NewRSVPService(repo, &mockMemberGetter{}, &mockRSVPNotifier{})
-
-	_, err := svc.Create(context.Background(), uuid.New(), uuid.New())
-	if !errors.Is(err, ErrRSVPSessionFull) {
-		t.Fatalf("expected ErrRSVPSessionFull, got %v", err)
 	}
 }
 

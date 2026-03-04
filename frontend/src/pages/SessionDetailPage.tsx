@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api, ApiError } from '../api/client';
+import CancelScopeModal from '../components/CancelScopeModal';
 import ConfirmModal from '../components/ConfirmModal';
 import GuestList from '../components/GuestList';
 import ImageUpload from '../components/ImageUpload';
@@ -20,7 +21,7 @@ export default function SessionDetailPage() {
   const isAdmin = user?.is_admin ?? false;
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [cancelSessionOpen, setCancelSessionOpen] = useState(false);
-  const [stopSeriesOpen, setStopSeriesOpen] = useState(false);
+  const [cancelScopeOpen, setCancelScopeOpen] = useState(false);
 
   const { data: session, isLoading } = useQuery({
     queryKey: ['session', id],
@@ -81,15 +82,16 @@ export default function SessionDetailPage() {
     },
   });
 
-  const stopSeriesMutation = useMutation({
-    mutationFn: (seriesId: string) => api.delete(`/api/sessions/series/${seriesId}`),
+  const cancelSeriesMutation = useMutation({
+    mutationFn: (seriesId: string) => api.cancelSeries(seriesId),
     onSuccess: () => {
-      addToast('Recurring series stopped. No new sessions will be generated.', 'success');
+      addToast('Series canceled. All future sessions have been canceled.', 'success');
       queryClient.invalidateQueries({ queryKey: ['session', id] });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
+      navigate('/');
     },
     onError: (err) => {
-      const message = err instanceof ApiError ? err.message : 'Failed to stop series';
+      const message = err instanceof ApiError ? err.message : 'Failed to cancel series';
       addToast(message, 'error');
     },
   });
@@ -103,7 +105,6 @@ export default function SessionDetailPage() {
   }
 
   const isCanceled = session.status === 'canceled';
-  const isFull = session.rsvp_count >= session.capacity;
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -161,13 +162,7 @@ export default function SessionDetailPage() {
                 {session.location}
               </p>
             )}
-            <p>
-              {isFull && !session.user_rsvped ? (
-                <span className="font-medium text-red-600 dark:text-red-400">Full</span>
-              ) : (
-                `${session.rsvp_count}/${session.capacity} spots`
-              )}
-            </p>
+            <p>{session.rsvp_count} attending</p>
           </div>
 
           {!isCanceled && (
@@ -180,10 +175,6 @@ export default function SessionDetailPage() {
                 >
                   Cancel RSVP
                 </button>
-              ) : isFull ? (
-                <span className="inline-block rounded-md bg-stone-100 px-4 py-2 text-sm font-medium text-stone-400 dark:bg-stone-700 dark:text-stone-500">
-                  Full
-                </span>
               ) : (
                 <button
                   onClick={() => rsvpMutation.mutate()}
@@ -202,19 +193,19 @@ export default function SessionDetailPage() {
                   >
                     Edit
                   </Link>
-                  <button
-                    onClick={() => setCancelSessionOpen(true)}
-                    className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
-                  >
-                    Cancel Session
-                  </button>
-                  {session.series_id && (
+                  {session.series_id ? (
                     <button
-                      onClick={() => setStopSeriesOpen(true)}
-                      disabled={stopSeriesMutation.isPending}
-                      className="rounded-md border border-orange-500 px-4 py-2 text-sm font-medium text-orange-600 transition-colors hover:bg-orange-50 disabled:opacity-50 dark:border-orange-400 dark:text-orange-400 dark:hover:bg-orange-900/30"
+                      onClick={() => setCancelScopeOpen(true)}
+                      className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
                     >
-                      Stop Recurring
+                      Cancel...
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setCancelSessionOpen(true)}
+                      className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
+                    >
+                      Cancel Session
                     </button>
                   )}
                 </>
@@ -276,19 +267,20 @@ export default function SessionDetailPage() {
         onCancel={() => setCancelSessionOpen(false)}
       />
 
-      <ConfirmModal
-        open={stopSeriesOpen}
-        title="Stop recurring series?"
-        message={`This will stop generating new sessions for "${session.title}". Existing sessions will remain and can still be individually managed.`}
-        confirmLabel="Stop Recurring"
-        onConfirm={() => {
-          setStopSeriesOpen(false);
-          if (session.series_id) {
-            stopSeriesMutation.mutate(session.series_id);
-          }
-        }}
-        onCancel={() => setStopSeriesOpen(false)}
-      />
+      {session.series_id && (
+        <CancelScopeModal
+          open={cancelScopeOpen}
+          onThisOnly={() => {
+            setCancelScopeOpen(false);
+            cancelSessionMutation.mutate();
+          }}
+          onAllSessions={() => {
+            setCancelScopeOpen(false);
+            cancelSeriesMutation.mutate(session.series_id!);
+          }}
+          onCancel={() => setCancelScopeOpen(false)}
+        />
+      )}
     </div>
   );
 }

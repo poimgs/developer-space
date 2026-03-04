@@ -10,4 +10,6 @@ type Notifier interface {
 	SessionCanceled(session *model.SpaceSession)
 	MemberRSVPed(session *model.SpaceSession, member *model.Member)
 	MemberCanceledRSVP(session *model.SpaceSession, member *model.Member)
+	SeriesUpdated(series *model.SessionSeries, affected []model.SpaceSession)
+	SeriesCanceled(series *model.SessionSeries, canceled []model.SpaceSession)
 }

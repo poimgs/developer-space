@@ -210,6 +210,151 @@ func (h *ImageHandler) urlToPath(imageURL string) string {
 	return filepath.Join(h.uploadDir, filename)
 }
 
+func (h *ImageHandler) UploadSeriesImage(w http.ResponseWriter, r *http.Request) {
+	seriesID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "Invalid series ID")
+		return
+	}
+
+	oldImageURL, err := h.svc.GetSeriesImageURL(r.Context(), seriesID)
+	if err != nil {
+		if errors.Is(err, service.ErrSeriesNotFound) {
+			response.Error(w, http.StatusNotFound, "Series not found")
+			return
+		}
+		slog.Error("failed to get series", "error", err)
+		response.Error(w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	r.Body = http.MaxBytesReader(w, r.Body, maxImageSize+1024)
+
+	if err := r.ParseMultipartForm(maxImageSize); err != nil {
+		if err.Error() == "http: request body too large" {
+			response.Error(w, http.StatusRequestEntityTooLarge, "File too large (max 5MB)")
+			return
+		}
+		response.Error(w, http.StatusBadRequest, "Invalid multipart form")
+		return
+	}
+
+	file, header, err := r.FormFile("image")
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "Missing image file")
+		return
+	}
+	defer file.Close()
+
+	if header.Size > maxImageSize {
+		response.Error(w, http.StatusRequestEntityTooLarge, "File too large (max 5MB)")
+		return
+	}
+
+	buf := make([]byte, 512)
+	n, err := file.Read(buf)
+	if err != nil && err != io.EOF {
+		slog.Error("failed to read file header", "error", err)
+		response.Error(w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	detectedType := http.DetectContentType(buf[:n])
+	ext, ok := allowedContentTypes[detectedType]
+	if !ok {
+		response.Error(w, http.StatusUnprocessableEntity, "Invalid file type (must be JPEG, PNG, or WebP)")
+		return
+	}
+
+	if _, err := file.Seek(0, io.SeekStart); err != nil {
+		slog.Error("failed to seek file", "error", err)
+		response.Error(w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	filename := fmt.Sprintf("series-%s-%d%s", seriesID.String(), time.Now().Unix(), ext)
+	filePath := filepath.Join(h.uploadDir, filename)
+
+	dst, err := os.Create(filePath)
+	if err != nil {
+		slog.Error("failed to create file", "error", err, "path", filePath)
+		response.Error(w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+	defer dst.Close()
+
+	if _, err := io.Copy(dst, file); err != nil {
+		slog.Error("failed to write file", "error", err)
+		os.Remove(filePath)
+		response.Error(w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	imageURL := "/" + uploadDir + "/" + filename
+	series, err := h.svc.UpdateSeriesImageURL(r.Context(), seriesID, imageURL)
+	if err != nil {
+		os.Remove(filePath)
+		slog.Error("failed to update series image url", "error", err)
+		response.Error(w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	if oldImageURL != "" {
+		oldPath := h.urlToPath(oldImageURL)
+		if oldPath != "" {
+			os.Remove(oldPath)
+		}
+	}
+
+	response.JSON(w, http.StatusOK, series)
+}
+
+func (h *ImageHandler) DeleteSeriesImage(w http.ResponseWriter, r *http.Request) {
+	seriesID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "Invalid series ID")
+		return
+	}
+
+	oldImageURL, err := h.svc.GetSeriesImageURL(r.Context(), seriesID)
+	if err != nil {
+		if errors.Is(err, service.ErrSeriesNotFound) {
+			response.Error(w, http.StatusNotFound, "Series not found")
+			return
+		}
+		slog.Error("failed to get series", "error", err)
+		response.Error(w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	if oldImageURL == "" {
+		series, err := h.svc.GetSeriesByID(r.Context(), seriesID)
+		if err != nil {
+			slog.Error("failed to get series", "error", err)
+			response.Error(w, http.StatusInternalServerError, "Internal server error")
+			return
+		}
+		response.JSON(w, http.StatusOK, series)
+		return
+	}
+
+	series, err := h.svc.ClearSeriesImageURL(r.Context(), seriesID)
+	if err != nil {
+		slog.Error("failed to clear series image url", "error", err)
+		response.Error(w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	oldPath := h.urlToPath(oldImageURL)
+	if oldPath != "" {
+		if err := os.Remove(oldPath); err != nil && !os.IsNotExist(err) {
+			slog.Error("failed to delete image file", "error", err, "path", oldPath)
+		}
+	}
+
+	response.JSON(w, http.StatusOK, series)
+}
+
 func isNotFound(err error) bool {
 	return errors.Is(err, service.ErrSessionNotFound)
 }

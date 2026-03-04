@@ -61,4 +61,16 @@ export const api = {
 
   uploadSessionImage: (sessionId: string, file: File) =>
     uploadRequest<APIResponse<{ image_url: string }>>(`/api/sessions/${sessionId}/image`, file),
+
+  updateSeries: (seriesId: string, data: unknown) =>
+    request<APIResponse<unknown>>(`/api/sessions/series/${seriesId}`, { method: 'PATCH', body: JSON.stringify(data) }),
+
+  cancelSeries: (seriesId: string) =>
+    request<unknown>(`/api/sessions/series/${seriesId}`, { method: 'DELETE' }),
+
+  uploadSeriesImage: (seriesId: string, file: File) =>
+    uploadRequest<APIResponse<{ image_url: string }>>(`/api/sessions/series/${seriesId}/image`, file),
+
+  deleteSeriesImage: (seriesId: string) =>
+    request<unknown>(`/api/sessions/series/${seriesId}/image`, { method: 'DELETE' }),
 };

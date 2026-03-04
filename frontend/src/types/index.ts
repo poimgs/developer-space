@@ -47,7 +47,6 @@ export interface SpaceSession {
   date: string;
   start_time: string;
   end_time: string;
-  capacity: number;
   status: 'scheduled' | 'shifted' | 'canceled';
   image_url: string | null;
   location: string | null;
@@ -65,7 +64,6 @@ export interface CreateSessionRequest {
   date: string;
   start_time: string;
   end_time: string;
-  capacity: number;
   location?: string | null;
   repeat_weekly?: number;
   repeat_forever?: boolean;
@@ -79,7 +77,6 @@ export interface UpdateSessionRequest {
   date?: string;
   start_time?: string;
   end_time?: string;
-  capacity?: number;
   location?: string | null;
 }
 
@@ -120,4 +117,28 @@ export interface APIResponse<T> {
 export interface APIError {
   error: string;
   details?: Record<string, string>;
+}
+
+export interface UpdateSeriesRequest {
+  title?: string;
+  description?: string | null;
+  start_time?: string;
+  end_time?: string;
+  location?: string | null;
+}
+
+export interface SessionSeries {
+  id: string;
+  title: string;
+  description: string | null;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  image_url: string | null;
+  location: string | null;
+  every_n_weeks: number;
+  is_active: boolean;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
 }

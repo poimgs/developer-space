@@ -13,7 +13,6 @@ type SpaceSession struct {
 	Date        string     `json:"date"`
 	StartTime   string     `json:"start_time"`
 	EndTime     string     `json:"end_time"`
-	Capacity    int        `json:"capacity"`
 	Status      string     `json:"status"`
 	ImageURL    *string    `json:"image_url"`
 	Location    *string    `json:"location"`
@@ -31,7 +30,6 @@ type CreateSessionRequest struct {
 	Date          string     `json:"date"`
 	StartTime     string     `json:"start_time"`
 	EndTime       string     `json:"end_time"`
-	Capacity      int        `json:"capacity"`
 	Location      *string    `json:"location"`
 	RepeatWeekly  int        `json:"repeat_weekly"`
 	RepeatForever bool       `json:"repeat_forever"`
@@ -46,6 +44,5 @@ type UpdateSessionRequest struct {
 	Date        *string `json:"date"`
 	StartTime   *string `json:"start_time"`
 	EndTime     *string `json:"end_time"`
-	Capacity    *int    `json:"capacity"`
 	Location    *string `json:"location"`
 }

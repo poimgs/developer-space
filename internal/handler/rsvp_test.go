@@ -56,6 +56,8 @@ func (n *noopNotifierForHandler) SessionShifted(session *model.SpaceSession)    
 func (n *noopNotifierForHandler) SessionCanceled(session *model.SpaceSession)                         {}
 func (n *noopNotifierForHandler) MemberRSVPed(session *model.SpaceSession, member *model.Member)      {}
 func (n *noopNotifierForHandler) MemberCanceledRSVP(session *model.SpaceSession, member *model.Member) {}
+func (n *noopNotifierForHandler) SeriesUpdated(series *model.SessionSeries, affected []model.SpaceSession) {}
+func (n *noopNotifierForHandler) SeriesCanceled(series *model.SessionSeries, canceled []model.SpaceSession) {}
 
 // --- Helpers ---
 
@@ -76,7 +78,6 @@ func testHandlerSession() *model.SpaceSession {
 		Date:      time.Now().AddDate(0, 0, 7).Format("2006-01-02"),
 		StartTime: "10:00",
 		EndTime:   "18:00",
-		Capacity:  8,
 		Status:    "scheduled",
 		CreatedBy: uuid.New(),
 		RSVPCount: 3,
@@ -157,21 +158,6 @@ func TestRSVPHandler_RSVP_404_SessionNotFound(t *testing.T) {
 func TestRSVPHandler_RSVP_409_Duplicate(t *testing.T) {
 	member := testHandlerMember()
 	repo := &mockRSVPRepoForHandler{createErr: repository.ErrRSVPDuplicate}
-	_, r := setupRSVPHandler(repo, member)
-
-	sessionID := uuid.New()
-	req := httptest.NewRequest("POST", "/api/sessions/"+sessionID.String()+"/rsvp", nil)
-	rec := httptest.NewRecorder()
-	r.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusConflict {
-		t.Fatalf("expected 409, got %d: %s", rec.Code, rec.Body.String())
-	}
-}
-
-func TestRSVPHandler_RSVP_409_Full(t *testing.T) {
-	member := testHandlerMember()
-	repo := &mockRSVPRepoForHandler{createErr: repository.ErrRSVPSessionFull}
 	_, r := setupRSVPHandler(repo, member)
 
 	sessionID := uuid.New()

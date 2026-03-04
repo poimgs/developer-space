@@ -27,8 +27,6 @@ func (n *TelegramNotifier) SessionCreated(session *model.SpaceSession) {
 	sb.WriteString(fmt.Sprintf("*%s*\n", esc(session.Title)))
 	sb.WriteString(fmt.Sprintf("📆 %s\n", esc(session.Date)))
 	sb.WriteString(fmt.Sprintf("🕐 %s – %s\n", esc(session.StartTime), esc(session.EndTime)))
-	sb.WriteString(fmt.Sprintf("👥 %s spots available", esc(fmt.Sprintf("%d", session.Capacity))))
-
 	if session.Description != nil && *session.Description != "" {
 		sb.WriteString(fmt.Sprintf("\n\n%s", esc(*session.Description)))
 	}
@@ -49,7 +47,6 @@ func (n *TelegramNotifier) SessionsCreatedRecurring(sessions []model.SpaceSessio
 	sb.WriteString("📅 *Recurring Sessions Created*\n\n")
 	sb.WriteString(fmt.Sprintf("*%s*\n", esc(first.Title)))
 	sb.WriteString(fmt.Sprintf("🕐 %s – %s\n", esc(first.StartTime), esc(first.EndTime)))
-	sb.WriteString(fmt.Sprintf("👥 %s spots each\n", esc(fmt.Sprintf("%d", first.Capacity))))
 
 	for _, s := range sessions {
 		sb.WriteString(fmt.Sprintf("\n📆 %s", esc(s.Date)))
@@ -93,10 +90,7 @@ func (n *TelegramNotifier) MemberRSVPed(session *model.SpaceSession, member *mod
 	sb.WriteString(fmt.Sprintf("✅ %s RSVPed\n\n", esc(member.Name)))
 	sb.WriteString(fmt.Sprintf("*%s*\n", esc(session.Title)))
 	sb.WriteString(fmt.Sprintf("📆 %s, %s – %s\n", esc(session.Date), esc(session.StartTime), esc(session.EndTime)))
-	sb.WriteString(fmt.Sprintf("👥 %s / %s spots taken",
-		esc(fmt.Sprintf("%d", session.RSVPCount)),
-		esc(fmt.Sprintf("%d", session.Capacity)),
-	))
+	sb.WriteString(fmt.Sprintf("👥 %s attending", esc(fmt.Sprintf("%d", session.RSVPCount))))
 
 	n.svc.SendMessage(sb.String())
 }
@@ -109,10 +103,43 @@ func (n *TelegramNotifier) MemberCanceledRSVP(session *model.SpaceSession, membe
 	sb.WriteString(fmt.Sprintf("🚫 %s canceled RSVP\n\n", esc(member.Name)))
 	sb.WriteString(fmt.Sprintf("*%s*\n", esc(session.Title)))
 	sb.WriteString(fmt.Sprintf("📆 %s, %s – %s\n", esc(session.Date), esc(session.StartTime), esc(session.EndTime)))
-	sb.WriteString(fmt.Sprintf("👥 %s / %s spots taken",
-		esc(fmt.Sprintf("%d", session.RSVPCount)),
-		esc(fmt.Sprintf("%d", session.Capacity)),
-	))
+	sb.WriteString(fmt.Sprintf("👥 %s attending", esc(fmt.Sprintf("%d", session.RSVPCount))))
+
+	n.svc.SendMessage(sb.String())
+}
+
+// SeriesUpdated sends a "Recurring Series Updated" notification.
+func (n *TelegramNotifier) SeriesUpdated(series *model.SessionSeries, affected []model.SpaceSession) {
+	if len(affected) == 0 {
+		return
+	}
+
+	esc := EscapeMarkdownV2
+
+	var sb strings.Builder
+	sb.WriteString("🔄 *Recurring Series Updated*\n\n")
+	sb.WriteString(fmt.Sprintf("*%s*\n", esc(series.Title)))
+	sb.WriteString(fmt.Sprintf("🕐 %s – %s\n", esc(series.StartTime), esc(series.EndTime)))
+	sb.WriteString(fmt.Sprintf("📅 %s sessions affected", esc(fmt.Sprintf("%d", len(affected)))))
+
+	n.svc.SendMessage(sb.String())
+}
+
+// SeriesCanceled sends a "Recurring Series Canceled" notification.
+func (n *TelegramNotifier) SeriesCanceled(series *model.SessionSeries, canceled []model.SpaceSession) {
+	if len(canceled) == 0 {
+		return
+	}
+
+	esc := EscapeMarkdownV2
+
+	var sb strings.Builder
+	sb.WriteString("❌ *Recurring Series Canceled*\n\n")
+	sb.WriteString(fmt.Sprintf("*%s*\n", esc(series.Title)))
+
+	for _, s := range canceled {
+		sb.WriteString(fmt.Sprintf("\n📆 %s", esc(s.Date)))
+	}
 
 	n.svc.SendMessage(sb.String())
 }

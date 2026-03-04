@@ -5,6 +5,7 @@ interface SessionFormProps {
   session?: SpaceSession;
   onSubmit: (data: CreateSessionRequest | UpdateSessionRequest) => Promise<void>;
   loading?: boolean;
+  hideDate?: boolean;
 }
 
 interface FormErrors {
@@ -12,11 +13,10 @@ interface FormErrors {
   date?: string;
   start_time?: string;
   end_time?: string;
-  capacity?: string;
   repeat_weekly?: string;
 }
 
-export default function SessionForm({ session, onSubmit, loading }: SessionFormProps) {
+export default function SessionForm({ session, onSubmit, loading, hideDate }: SessionFormProps) {
   const isEdit = !!session;
 
   const [title, setTitle] = useState(session?.title ?? '');
@@ -24,7 +24,6 @@ export default function SessionForm({ session, onSubmit, loading }: SessionFormP
   const [date, setDate] = useState(session?.date ?? '');
   const [startTime, setStartTime] = useState(session?.start_time ?? '');
   const [endTime, setEndTime] = useState(session?.end_time ?? '');
-  const [capacity, setCapacity] = useState(session?.capacity?.toString() ?? '');
   const [location, setLocation] = useState(session?.location ?? '');
   const [repeatMode, setRepeatMode] = useState<'none' | 'weekly' | 'forever'>('none');
   const [repeatCount, setRepeatCount] = useState(1);
@@ -41,8 +40,6 @@ export default function SessionForm({ session, onSubmit, loading }: SessionFormP
     if (startTime && endTime && endTime <= startTime) {
       errs.end_time = 'End time must be after start time';
     }
-    const cap = parseInt(capacity, 10);
-    if (!capacity || isNaN(cap) || cap < 1) errs.capacity = 'Capacity must be at least 1';
     if (!isEdit && repeatMode === 'weekly' && (repeatCount < 1 || repeatCount > 12)) {
       errs.repeat_weekly = 'Repeat count must be between 1 and 12';
     }
@@ -65,8 +62,6 @@ export default function SessionForm({ session, onSubmit, loading }: SessionFormP
       if (date !== session.date) data.date = date;
       if (startTime !== session.start_time) data.start_time = startTime;
       if (endTime !== session.end_time) data.end_time = endTime;
-      const cap = parseInt(capacity, 10);
-      if (cap !== session.capacity) data.capacity = cap;
       if ((location || '') !== (session.location || '')) data.location = location.trim() || null;
       await onSubmit(data);
     } else {
@@ -75,7 +70,6 @@ export default function SessionForm({ session, onSubmit, loading }: SessionFormP
         date,
         start_time: startTime,
         end_time: endTime,
-        capacity: parseInt(capacity, 10),
       };
       if (description.trim()) data.description = description.trim();
       if (location.trim()) data.location = location.trim();
@@ -138,19 +132,21 @@ export default function SessionForm({ session, onSubmit, loading }: SessionFormP
         </div>
       </div>
 
-      <div>
-        <label htmlFor="date" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-          Date <span className="text-red-500">*</span>
-        </label>
-        <input
-          id="date"
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="mt-1 block w-full rounded-md border border-stone-300 px-3 py-2 text-stone-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none dark:border-stone-600 dark:bg-stone-700 dark:text-stone-100"
-        />
-        {errors.date && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.date}</p>}
-      </div>
+      {!hideDate && (
+        <div>
+          <label htmlFor="date" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
+            Date <span className="text-red-500">*</span>
+          </label>
+          <input
+            id="date"
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="mt-1 block w-full rounded-md border border-stone-300 px-3 py-2 text-stone-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none dark:border-stone-600 dark:bg-stone-700 dark:text-stone-100"
+          />
+          {errors.date && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.date}</p>}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <div>
@@ -179,21 +175,6 @@ export default function SessionForm({ session, onSubmit, loading }: SessionFormP
           />
           {errors.end_time && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.end_time}</p>}
         </div>
-      </div>
-
-      <div>
-        <label htmlFor="capacity" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-          Capacity <span className="text-red-500">*</span>
-        </label>
-        <input
-          id="capacity"
-          type="number"
-          min="1"
-          value={capacity}
-          onChange={(e) => setCapacity(e.target.value)}
-          className="mt-1 block w-full rounded-md border border-stone-300 px-3 py-2 text-stone-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none dark:border-stone-600 dark:bg-stone-700 dark:text-stone-100"
-        />
-        {errors.capacity && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.capacity}</p>}
       </div>
 
       {!isEdit && (

@@ -313,7 +313,7 @@ func TestCancelSession_TriggersEmailNotification(t *testing.T) {
 	notifier := &mockNotifier{}
 	emailSender := &mockNotificationEmailSender{}
 
-	existing := repo.addSession("Session", futureDate(), "14:00", "18:00", "scheduled", 8)
+	existing := repo.addSession("Session", futureDate(), "14:00", "18:00", "scheduled")
 	rsvpLister := &mockRSVPMemberLister{
 		recipients: map[uuid.UUID][]model.RSVPRecipient{
 			existing.ID: {
@@ -352,7 +352,7 @@ func TestUpdateSession_ShiftTriggersEmailNotification(t *testing.T) {
 	emailSender := &mockNotificationEmailSender{}
 
 	newDate := time.Now().AddDate(0, 0, 14).Format("2006-01-02")
-	existing := repo.addSession("Session", futureDate(), "14:00", "18:00", "scheduled", 8)
+	existing := repo.addSession("Session", futureDate(), "14:00", "18:00", "scheduled")
 	rsvpLister := &mockRSVPMemberLister{
 		recipients: map[uuid.UUID][]model.RSVPRecipient{
 			existing.ID: {
@@ -394,7 +394,7 @@ func TestUpdateSession_TitleOnlyNoEmail(t *testing.T) {
 	repo := newMockSessionRepo()
 	emailSender := &mockNotificationEmailSender{}
 
-	existing := repo.addSession("Old Title", futureDate(), "14:00", "18:00", "scheduled", 8)
+	existing := repo.addSession("Old Title", futureDate(), "14:00", "18:00", "scheduled")
 	rsvpLister := &mockRSVPMemberLister{
 		recipients: map[uuid.UUID][]model.RSVPRecipient{
 			existing.ID: {
@@ -428,7 +428,7 @@ func TestCancelSession_WithoutEmailNotifier_StillWorks(t *testing.T) {
 	svc := NewSessionService(repo, notifier)
 	// No SetEmailNotifier — should still work fine
 
-	existing := repo.addSession("Session", futureDate(), "14:00", "18:00", "scheduled", 8)
+	existing := repo.addSession("Session", futureDate(), "14:00", "18:00", "scheduled")
 
 	session, err := svc.Cancel(context.Background(), existing.ID)
 	if err != nil {

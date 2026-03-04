@@ -32,3 +32,11 @@ func (n *NoopNotifier) MemberRSVPed(session *model.SpaceSession, member *model.M
 func (n *NoopNotifier) MemberCanceledRSVP(session *model.SpaceSession, member *model.Member) {
 	slog.Debug("notification skipped (noop)", "event", "member_canceled_rsvp", "session_id", session.ID)
 }
+
+func (n *NoopNotifier) SeriesUpdated(series *model.SessionSeries, affected []model.SpaceSession) {
+	slog.Debug("notification skipped (noop)", "event", "series_updated", "series_id", series.ID)
+}
+
+func (n *NoopNotifier) SeriesCanceled(series *model.SessionSeries, canceled []model.SpaceSession) {
+	slog.Debug("notification skipped (noop)", "event", "series_canceled", "series_id", series.ID)
+}

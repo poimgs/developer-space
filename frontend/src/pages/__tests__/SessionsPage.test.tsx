@@ -51,7 +51,6 @@ function makeSession(overrides: Partial<SpaceSession> = {}): SpaceSession {
     date: '2026-03-06',
     start_time: '14:00',
     end_time: '18:00',
-    capacity: 8,
     status: 'scheduled',
     image_url: null,
     location: null,

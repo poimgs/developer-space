@@ -41,7 +41,6 @@ func testSession() *model.SpaceSession {
 		Date:        "2025-02-14",
 		StartTime:   "14:00",
 		EndTime:     "18:00",
-		Capacity:    8,
 		Status:      "scheduled",
 		RSVPCount:   4,
 		CreatedAt:   time.Now(),
@@ -69,7 +68,6 @@ func TestNotifier_SessionCreated(t *testing.T) {
 	assertContains(t, *captured, "2025\\-02\\-14")
 	assertContains(t, *captured, "14:00")
 	assertContains(t, *captured, "18:00")
-	assertContains(t, *captured, "8 spots available")
 	assertContains(t, *captured, "Open co\\-working")
 }
 
@@ -90,15 +88,14 @@ func TestNotifier_SessionsCreatedRecurring(t *testing.T) {
 	notifier := NewTelegramNotifier(svc)
 
 	sessions := []model.SpaceSession{
-		{Title: "Friday Session", Date: "2025-02-14", StartTime: "14:00", EndTime: "18:00", Capacity: 8},
-		{Title: "Friday Session", Date: "2025-02-21", StartTime: "14:00", EndTime: "18:00", Capacity: 8},
-		{Title: "Friday Session", Date: "2025-02-28", StartTime: "14:00", EndTime: "18:00", Capacity: 8},
+		{Title: "Friday Session", Date: "2025-02-14", StartTime: "14:00", EndTime: "18:00"},
+		{Title: "Friday Session", Date: "2025-02-21", StartTime: "14:00", EndTime: "18:00"},
+		{Title: "Friday Session", Date: "2025-02-28", StartTime: "14:00", EndTime: "18:00"},
 	}
 	notifier.SessionsCreatedRecurring(sessions)
 
 	assertContains(t, *captured, "Recurring Sessions Created")
 	assertContains(t, *captured, "Friday Session")
-	assertContains(t, *captured, "8 spots each")
 	assertContains(t, *captured, "2025\\-02\\-14")
 	assertContains(t, *captured, "2025\\-02\\-21")
 	assertContains(t, *captured, "2025\\-02\\-28")
@@ -158,7 +155,7 @@ func TestNotifier_MemberRSVPed(t *testing.T) {
 
 	assertContains(t, *captured, "Jane Doe RSVPed")
 	assertContains(t, *captured, "Friday Afternoon Session")
-	assertContains(t, *captured, "4 / 8 spots taken")
+	assertContains(t, *captured, "4 attending")
 }
 
 func TestNotifier_MemberCanceledRSVP(t *testing.T) {
@@ -172,7 +169,7 @@ func TestNotifier_MemberCanceledRSVP(t *testing.T) {
 
 	assertContains(t, *captured, "Jane Doe canceled RSVP")
 	assertContains(t, *captured, "Friday Afternoon Session")
-	assertContains(t, *captured, "3 / 8 spots taken")
+	assertContains(t, *captured, "3 attending")
 }
 
 func TestNotifier_EscapesSpecialChars(t *testing.T) {

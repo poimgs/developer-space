@@ -18,7 +18,6 @@ function makeSession(overrides: Partial<SpaceSession> = {}): SpaceSession {
     date: '2026-03-06',
     start_time: '14:00',
     end_time: '18:00',
-    capacity: 8,
     status: 'scheduled',
     image_url: null,
     location: null,
@@ -47,9 +46,9 @@ describe('SessionCard', () => {
     expect(screen.getByText('14:00 – 18:00')).toBeInTheDocument();
   });
 
-  it('renders spot count', () => {
-    renderCard(makeSession({ rsvp_count: 3, capacity: 8 }));
-    expect(screen.getByText('3/8 spots')).toBeInTheDocument();
+  it('renders attending count', () => {
+    renderCard(makeSession({ rsvp_count: 3 }));
+    expect(screen.getByText('3 attending')).toBeInTheDocument();
   });
 
   it('renders status badge', () => {
@@ -57,8 +56,8 @@ describe('SessionCard', () => {
     expect(screen.getByText('Rescheduled')).toBeInTheDocument();
   });
 
-  it('shows RSVP button when not RSVPed and not full', () => {
-    renderCard(makeSession({ user_rsvped: false, rsvp_count: 3, capacity: 8 }));
+  it('shows RSVP button when not RSVPed', () => {
+    renderCard(makeSession({ user_rsvped: false, rsvp_count: 3 }));
     expect(screen.getByRole('button', { name: 'RSVP' })).toBeInTheDocument();
   });
 
@@ -93,11 +92,9 @@ describe('SessionCard', () => {
     expect(onCancelRSVP).toHaveBeenCalledWith('session-1');
   });
 
-  it('shows Full badge when session is full and user not RSVPed', () => {
-    renderCard(makeSession({ rsvp_count: 8, capacity: 8, user_rsvped: false }));
-    // Both the spot count area and the disabled badge show "Full"
-    const fullElements = screen.getAllByText('Full');
-    expect(fullElements.length).toBeGreaterThanOrEqual(1);
+  it('shows RSVP button regardless of rsvp count', () => {
+    renderCard(makeSession({ rsvp_count: 8, user_rsvped: false }));
+    expect(screen.getByRole('button', { name: 'RSVP' })).toBeInTheDocument();
   });
 
   it('does not show RSVP buttons for canceled sessions', () => {
@@ -113,8 +110,8 @@ describe('SessionCard', () => {
     expect(screen.getByText('Friday Coworking').className).toContain('line-through');
   });
 
-  it('shows Cancel RSVP even when full if user is RSVPed', () => {
-    renderCard(makeSession({ rsvp_count: 8, capacity: 8, user_rsvped: true }));
+  it('shows Cancel RSVP when user is RSVPed', () => {
+    renderCard(makeSession({ rsvp_count: 8, user_rsvped: true }));
     expect(screen.getByRole('button', { name: 'Cancel RSVP' })).toBeInTheDocument();
   });
 

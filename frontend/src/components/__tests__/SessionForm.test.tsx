@@ -12,7 +12,6 @@ function makeSession(overrides: Partial<SpaceSession> = {}): SpaceSession {
     date: '2026-03-06',
     start_time: '14:00',
     end_time: '18:00',
-    capacity: 8,
     status: 'scheduled',
     image_url: null,
     location: null,
@@ -35,7 +34,6 @@ describe('SessionForm', () => {
       expect(screen.getByLabelText(/date/i)).toHaveValue('');
       expect(screen.getByLabelText(/start time/i)).toHaveValue('');
       expect(screen.getByLabelText(/end time/i)).toHaveValue('');
-      expect(screen.getByLabelText(/capacity/i)).toHaveValue(null);
     });
 
     it('shows Create Session submit button', () => {
@@ -68,7 +66,6 @@ describe('SessionForm', () => {
       expect(screen.getByText('Date is required')).toBeInTheDocument();
       expect(screen.getByText('Start time is required')).toBeInTheDocument();
       expect(screen.getByText('End time is required')).toBeInTheDocument();
-      expect(screen.getByText('Capacity must be at least 1')).toBeInTheDocument();
       expect(onSubmit).not.toHaveBeenCalled();
     });
 
@@ -86,8 +83,6 @@ describe('SessionForm', () => {
       await user.type(startInput, '18:00');
       await user.clear(endInput);
       await user.type(endInput, '14:00');
-      await user.clear(screen.getByLabelText(/capacity/i));
-      await user.type(screen.getByLabelText(/capacity/i), '8');
 
       await user.click(screen.getByRole('button', { name: 'Create Session' }));
       expect(screen.getByText('End time must be after start time')).toBeInTheDocument();
@@ -104,7 +99,6 @@ describe('SessionForm', () => {
       await user.type(screen.getByLabelText(/date/i), '2026-04-01');
       await user.type(screen.getByLabelText(/start time/i), '14:00');
       await user.type(screen.getByLabelText(/end time/i), '18:00');
-      await user.type(screen.getByLabelText(/capacity/i), '8');
 
       await user.click(screen.getByRole('button', { name: 'Create Session' }));
 
@@ -114,7 +108,6 @@ describe('SessionForm', () => {
         date: '2026-04-01',
         start_time: '14:00',
         end_time: '18:00',
-        capacity: 8,
       });
     });
 
@@ -127,7 +120,6 @@ describe('SessionForm', () => {
       await user.type(screen.getByLabelText(/date/i), '2026-04-01');
       await user.type(screen.getByLabelText(/start time/i), '14:00');
       await user.type(screen.getByLabelText(/end time/i), '18:00');
-      await user.type(screen.getByLabelText(/capacity/i), '8');
 
       await user.click(screen.getByLabelText(/repeat weekly for/i));
       // Default repeat count is 1
@@ -153,7 +145,6 @@ describe('SessionForm', () => {
       expect(screen.getByLabelText(/date/i)).toHaveValue('2026-03-06');
       expect(screen.getByLabelText(/start time/i)).toHaveValue('14:00');
       expect(screen.getByLabelText(/end time/i)).toHaveValue('18:00');
-      expect(screen.getByLabelText(/capacity/i)).toHaveValue(8);
     });
 
     it('shows Save Changes submit button', () => {
@@ -215,7 +206,6 @@ describe('SessionForm', () => {
       await user.type(screen.getByLabelText(/date/i), '2026-04-01');
       await user.type(screen.getByLabelText(/start time/i), '14:00');
       await user.type(screen.getByLabelText(/end time/i), '18:00');
-      await user.type(screen.getByLabelText(/capacity/i), '8');
       await user.type(screen.getByLabelText(/location/i), 'Room 42');
 
       await user.click(screen.getByRole('button', { name: 'Create Session' }));
@@ -288,7 +278,6 @@ describe('SessionForm', () => {
       await user.type(screen.getByLabelText(/date/i), '2026-04-01');
       await user.type(screen.getByLabelText(/start time/i), '14:00');
       await user.type(screen.getByLabelText(/end time/i), '18:00');
-      await user.type(screen.getByLabelText(/capacity/i), '8');
 
       await user.click(screen.getByLabelText(/repeat weekly for/i));
 
@@ -317,7 +306,6 @@ describe('SessionForm', () => {
       await user.type(screen.getByLabelText(/date/i), '2026-04-01');
       await user.type(screen.getByLabelText(/start time/i), '14:00');
       await user.type(screen.getByLabelText(/end time/i), '18:00');
-      await user.type(screen.getByLabelText(/capacity/i), '8');
 
       await user.click(screen.getByLabelText(/repeat forever/i));
       await user.click(screen.getByRole('button', { name: 'Create Session' }));
@@ -331,9 +319,9 @@ describe('SessionForm', () => {
   describe('required field indicators', () => {
     it('shows asterisks on required fields', () => {
       render(<SessionForm onSubmit={vi.fn()} />);
-      // There should be red asterisks for Title, Date, Start time, End time, Capacity
+      // There should be red asterisks for Title, Date, Start time, End time
       const asterisks = document.querySelectorAll('.text-red-500');
-      expect(asterisks.length).toBe(5);
+      expect(asterisks.length).toBe(4);
     });
   });
 });

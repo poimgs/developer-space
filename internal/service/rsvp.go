@@ -15,7 +15,6 @@ var (
 	ErrRSVPSessionNotFound = errors.New("session not found")
 	ErrRSVPSessionCanceled = errors.New("cannot RSVP to a canceled session")
 	ErrRSVPSessionPast     = errors.New("cannot RSVP to a past session")
-	ErrRSVPSessionFull     = errors.New("this session is full")
 	ErrRSVPDuplicate       = errors.New("you have already RSVPed to this session")
 	ErrRSVPNotFound        = errors.New("you have not RSVPed to this session")
 )
@@ -100,8 +99,6 @@ func mapRepoError(err error) error {
 		return ErrRSVPSessionCanceled
 	case errors.Is(err, repository.ErrRSVPSessionPast):
 		return ErrRSVPSessionPast
-	case errors.Is(err, repository.ErrRSVPSessionFull):
-		return ErrRSVPSessionFull
 	case errors.Is(err, repository.ErrRSVPDuplicate):
 		return ErrRSVPDuplicate
 	case errors.Is(err, repository.ErrRSVPNotFound):

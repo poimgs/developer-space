@@ -18,7 +18,6 @@ func TestSpaceSessionJSONSerialization(t *testing.T) {
 		Date:        "2026-03-15",
 		StartTime:   "09:00",
 		EndTime:     "12:00",
-		Capacity:    8,
 		Status:      "scheduled",
 		CreatedBy:   uuid.New(),
 		CreatedAt:   now,
@@ -46,9 +45,6 @@ func TestSpaceSessionJSONSerialization(t *testing.T) {
 	if decoded.Date != s.Date {
 		t.Errorf("Date = %q, want %q", decoded.Date, s.Date)
 	}
-	if decoded.Capacity != 8 {
-		t.Errorf("Capacity = %d, want 8", decoded.Capacity)
-	}
 	if decoded.Status != "scheduled" {
 		t.Errorf("Status = %q, want 'scheduled'", decoded.Status)
 	}
@@ -62,11 +58,10 @@ func TestSpaceSessionJSONSerialization(t *testing.T) {
 
 func TestSpaceSessionOmitsZeroRSVPCount(t *testing.T) {
 	s := SpaceSession{
-		ID:       uuid.New(),
-		Title:    "Test",
-		Date:     "2026-03-15",
-		Capacity: 5,
-		Status:   "scheduled",
+		ID:     uuid.New(),
+		Title:  "Test",
+		Date:   "2026-03-15",
+		Status: "scheduled",
 	}
 
 	data, err := json.Marshal(s)
@@ -98,7 +93,6 @@ func TestSpaceSessionImageURLAndLocation(t *testing.T) {
 		Date:      "2026-03-15",
 		StartTime: "09:00",
 		EndTime:   "12:00",
-		Capacity:  8,
 		Status:    "scheduled",
 		ImageURL:  &imageURL,
 		Location:  &location,
@@ -127,11 +121,10 @@ func TestSpaceSessionImageURLAndLocation(t *testing.T) {
 
 func TestSpaceSessionImageURLAndLocationNullWhenUnset(t *testing.T) {
 	s := SpaceSession{
-		ID:       uuid.New(),
-		Title:    "Session without Image",
-		Date:     "2026-03-15",
-		Capacity: 5,
-		Status:   "scheduled",
+		ID:     uuid.New(),
+		Title:  "Session without Image",
+		Date:   "2026-03-15",
+		Status: "scheduled",
 	}
 
 	data, err := json.Marshal(s)
@@ -153,7 +146,7 @@ func TestSpaceSessionImageURLAndLocationNullWhenUnset(t *testing.T) {
 }
 
 func TestCreateSessionRequestWithLocation(t *testing.T) {
-	body := `{"title":"Afternoon Session","date":"2026-03-20","start_time":"14:00","end_time":"17:00","capacity":6,"location":"Downtown Office"}`
+	body := `{"title":"Afternoon Session","date":"2026-03-20","start_time":"14:00","end_time":"17:00","location":"Downtown Office"}`
 
 	var req CreateSessionRequest
 	if err := json.Unmarshal([]byte(body), &req); err != nil {
@@ -169,7 +162,7 @@ func TestCreateSessionRequestWithLocation(t *testing.T) {
 }
 
 func TestCreateSessionRequestLocationOptional(t *testing.T) {
-	body := `{"title":"Afternoon Session","date":"2026-03-20","start_time":"14:00","end_time":"17:00","capacity":6}`
+	body := `{"title":"Afternoon Session","date":"2026-03-20","start_time":"14:00","end_time":"17:00"}`
 
 	var req CreateSessionRequest
 	if err := json.Unmarshal([]byte(body), &req); err != nil {
@@ -198,7 +191,7 @@ func TestUpdateSessionRequestWithLocation(t *testing.T) {
 }
 
 func TestCreateSessionRequestJSON(t *testing.T) {
-	body := `{"title":"Afternoon Session","date":"2026-03-20","start_time":"14:00","end_time":"17:00","capacity":6,"repeat_weekly":3}`
+	body := `{"title":"Afternoon Session","date":"2026-03-20","start_time":"14:00","end_time":"17:00","repeat_weekly":3}`
 
 	var req CreateSessionRequest
 	if err := json.Unmarshal([]byte(body), &req); err != nil {
@@ -208,16 +201,13 @@ func TestCreateSessionRequestJSON(t *testing.T) {
 	if req.Title != "Afternoon Session" {
 		t.Errorf("Title = %q, want 'Afternoon Session'", req.Title)
 	}
-	if req.Capacity != 6 {
-		t.Errorf("Capacity = %d, want 6", req.Capacity)
-	}
 	if req.RepeatWeekly != 3 {
 		t.Errorf("RepeatWeekly = %d, want 3", req.RepeatWeekly)
 	}
 }
 
 func TestUpdateSessionRequestPartialJSON(t *testing.T) {
-	body := `{"title":"Updated Title","capacity":10}`
+	body := `{"title":"Updated Title"}`
 
 	var req UpdateSessionRequest
 	if err := json.Unmarshal([]byte(body), &req); err != nil {
@@ -226,9 +216,6 @@ func TestUpdateSessionRequestPartialJSON(t *testing.T) {
 
 	if req.Title == nil || *req.Title != "Updated Title" {
 		t.Errorf("Title = %v, want 'Updated Title'", req.Title)
-	}
-	if req.Capacity == nil || *req.Capacity != 10 {
-		t.Errorf("Capacity = %v, want 10", req.Capacity)
 	}
 	if req.Date != nil {
 		t.Error("Date should be nil for partial update")

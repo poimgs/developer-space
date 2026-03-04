@@ -123,10 +123,6 @@ func (h *SessionHandler) Update(w http.ResponseWriter, r *http.Request) {
 			response.Error(w, http.StatusUnprocessableEntity, "Cannot edit a canceled session")
 			return
 		}
-		if errors.Is(err, service.ErrCapacityBelowRSVPs) {
-			response.Error(w, http.StatusConflict, "Cannot reduce capacity below current RSVP count")
-			return
-		}
 		response.Error(w, http.StatusInternalServerError, "Internal server error")
 		return
 	}
@@ -158,27 +154,50 @@ func (h *SessionHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, session)
 }
 
-func (h *SessionHandler) StopSeries(w http.ResponseWriter, r *http.Request) {
+func (h *SessionHandler) CancelSeries(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		response.Error(w, http.StatusBadRequest, "Invalid series ID")
 		return
 	}
 
-	err = h.svc.StopSeries(r.Context(), id)
+	err = h.svc.CancelSeries(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, service.ErrSeriesNotFound) {
 			response.Error(w, http.StatusNotFound, "Series not found")
 			return
 		}
-		if errors.Is(err, service.ErrSeriesInactive) {
-			response.Error(w, http.StatusUnprocessableEntity, "Series is already inactive")
-			return
-		}
-		slog.Error("failed to stop series", "error", err)
+		slog.Error("failed to cancel series", "error", err)
 		response.Error(w, http.StatusInternalServerError, "Internal server error")
 		return
 	}
 
-	response.JSON(w, http.StatusOK, map[string]string{"status": "stopped"})
+	response.JSON(w, http.StatusOK, map[string]string{"status": "canceled"})
+}
+
+func (h *SessionHandler) UpdateSeries(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "Invalid series ID")
+		return
+	}
+
+	var req model.UpdateSeriesRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		response.Error(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	series, err := h.svc.UpdateSeries(r.Context(), id, req)
+	if err != nil {
+		if errors.Is(err, service.ErrSeriesNotFound) {
+			response.Error(w, http.StatusNotFound, "Series not found")
+			return
+		}
+		slog.Error("failed to update series", "error", err)
+		response.Error(w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	response.JSON(w, http.StatusOK, series)
 }

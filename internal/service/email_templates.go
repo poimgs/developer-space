@@ -36,6 +36,40 @@ func rescheduleEmailBody(memberName string, oldSession, newSession *model.SpaceS
 	)
 }
 
+func seriesUpdatedEmailSubject(seriesTitle string) string {
+	return fmt.Sprintf("Recurring Series Updated: %s", seriesTitle)
+}
+
+func seriesUpdatedEmailBody(memberName string, series *model.SessionSeries, dates []string) string {
+	dateList := ""
+	for _, d := range dates {
+		dateList += fmt.Sprintf("  - %s\n", formatDateHuman(d))
+	}
+	return fmt.Sprintf(
+		"Hi %s,\n\nThe recurring series \"%s\" has been updated.\n\nAffected sessions:\n%s\nYour RSVPs are still active — no action needed unless the changes don't work for you.\n\n— Developer Space\n",
+		memberName,
+		series.Title,
+		dateList,
+	)
+}
+
+func seriesCanceledEmailSubject(seriesTitle string) string {
+	return fmt.Sprintf("Recurring Series Canceled: %s", seriesTitle)
+}
+
+func seriesCanceledEmailBody(memberName string, series *model.SessionSeries, dates []string) string {
+	dateList := ""
+	for _, d := range dates {
+		dateList += fmt.Sprintf("  - %s\n", formatDateHuman(d))
+	}
+	return fmt.Sprintf(
+		"Hi %s,\n\nThe recurring series \"%s\" has been canceled.\n\nCanceled sessions:\n%s\nYour RSVPs have been noted. No further action is needed.\n\n— Developer Space\n",
+		memberName,
+		series.Title,
+		dateList,
+	)
+}
+
 func formatDateHuman(dateStr string) string {
 	t, err := time.Parse("2006-01-02", dateStr)
 	if err != nil {

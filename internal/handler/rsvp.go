@@ -51,10 +51,6 @@ func (h *RSVPHandler) RSVP(w http.ResponseWriter, r *http.Request) {
 			response.Error(w, http.StatusConflict, "You have already RSVPed to this session")
 			return
 		}
-		if errors.Is(err, service.ErrRSVPSessionFull) {
-			response.Error(w, http.StatusConflict, "This session is full")
-			return
-		}
 		response.Error(w, http.StatusInternalServerError, "Internal server error")
 		return
 	}

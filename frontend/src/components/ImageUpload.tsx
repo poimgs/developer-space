@@ -3,7 +3,8 @@ import { api, ApiError } from '../api/client';
 import { useToast } from '../context/ToastContext';
 
 interface ImageUploadProps {
-  sessionId: string;
+  sessionId?: string;
+  seriesId?: string;
   currentImageUrl?: string | null;
   onUpload: (imageUrl: string) => void;
   onRemove?: () => void;
@@ -12,7 +13,7 @@ interface ImageUploadProps {
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
-export default function ImageUpload({ sessionId, currentImageUrl, onUpload, onRemove }: ImageUploadProps) {
+export default function ImageUpload({ sessionId, seriesId, currentImageUrl, onUpload, onRemove }: ImageUploadProps) {
   const { addToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -37,7 +38,9 @@ export default function ImageUpload({ sessionId, currentImageUrl, onUpload, onRe
 
     setUploading(true);
     try {
-      const res = await api.uploadSessionImage(sessionId, file);
+      const res = seriesId
+        ? await api.uploadSeriesImage(seriesId, file)
+        : await api.uploadSessionImage(sessionId!, file);
       onUpload(res.data.image_url);
       addToast('Image uploaded.', 'success');
     } catch (err) {
@@ -74,7 +77,10 @@ export default function ImageUpload({ sessionId, currentImageUrl, onUpload, onRe
   async function handleRemove() {
     setUploading(true);
     try {
-      await api.delete(`/api/sessions/${sessionId}/image`);
+      const path = seriesId
+        ? `/api/sessions/series/${seriesId}/image`
+        : `/api/sessions/${sessionId}/image`;
+      await api.delete(path);
       onRemove?.();
       addToast('Image removed.', 'success');
     } catch (err) {

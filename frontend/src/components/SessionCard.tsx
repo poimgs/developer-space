@@ -21,9 +21,7 @@ export default function SessionCard({ session, attendees, onRSVP, onCancelRSVP, 
   const [cancelSessionOpen, setCancelSessionOpen] = useState(false);
 
   const isCanceled = session.status === 'canceled';
-  const isFull = session.rsvp_count >= session.capacity;
   const isAdmin = user?.is_admin ?? false;
-  const fillPercent = session.capacity > 0 ? Math.min(100, (session.rsvp_count / session.capacity) * 100) : 0;
   const isHero = variant === 'hero';
 
   function handleRSVPClick() {
@@ -97,23 +95,11 @@ export default function SessionCard({ session, attendees, onRSVP, onCancelRSVP, 
             </p>
           )}
 
-          {/* Capacity */}
-          <div className="mt-2 flex items-center gap-2">
+          {/* Attendance */}
+          <div className="mt-2">
             <span className="text-sm text-stone-600 dark:text-stone-300">
-              {isFull && !session.user_rsvped ? (
-                <span className="font-medium text-red-600 dark:text-red-400">Full</span>
-              ) : (
-                `${session.rsvp_count}/${session.capacity} spots`
-              )}
+              {session.rsvp_count} attending
             </span>
-            {!isCanceled && (
-              <div className="h-1.5 w-16 rounded-full bg-stone-200 dark:bg-stone-600">
-                <div
-                  className={`h-1.5 rounded-full transition-all ${isFull ? 'bg-red-500' : 'bg-amber-500'}`}
-                  style={{ width: `${fillPercent}%` }}
-                />
-              </div>
-            )}
           </div>
 
           {/* Actions */}
@@ -128,10 +114,6 @@ export default function SessionCard({ session, attendees, onRSVP, onCancelRSVP, 
                   >
                     Cancel RSVP
                   </button>
-                ) : isFull ? (
-                  <span className="rounded-md bg-stone-100 px-3 py-1.5 text-sm font-medium text-stone-400 dark:bg-stone-700 dark:text-stone-500">
-                    Full
-                  </span>
                 ) : (
                   <button
                     onClick={handleRSVPClick}

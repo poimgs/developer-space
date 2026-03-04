@@ -79,6 +79,16 @@ func (m *mockSessionRepoForImage) UpdateImageURL(ctx context.Context, id uuid.UU
 	return s, nil
 }
 
+func (m *mockSessionRepoForImage) ListFutureBySeriesID(ctx context.Context, seriesID uuid.UUID) ([]model.SpaceSession, error) {
+	return []model.SpaceSession{}, nil
+}
+func (m *mockSessionRepoForImage) UpdateBulkBySeriesID(ctx context.Context, seriesID uuid.UUID, req model.UpdateSessionRequest, imageURL *string) (int64, error) {
+	return 0, nil
+}
+func (m *mockSessionRepoForImage) CancelFutureBySeriesID(ctx context.Context, seriesID uuid.UUID) ([]model.SpaceSession, error) {
+	return []model.SpaceSession{}, nil
+}
+
 func (m *mockSessionRepoForImage) addSession(id uuid.UUID) *model.SpaceSession {
 	s := &model.SpaceSession{
 		ID:        id,
@@ -86,7 +96,6 @@ func (m *mockSessionRepoForImage) addSession(id uuid.UUID) *model.SpaceSession {
 		Date:      "2026-04-01",
 		StartTime: "14:00",
 		EndTime:   "18:00",
-		Capacity:  8,
 		Status:    "scheduled",
 		CreatedBy: uuid.New(),
 		CreatedAt: time.Now(),
@@ -134,6 +143,8 @@ func (n *mockNotifierForImage) SessionShifted(session *model.SpaceSession)      
 func (n *mockNotifierForImage) SessionCanceled(session *model.SpaceSession)                         {}
 func (n *mockNotifierForImage) MemberRSVPed(session *model.SpaceSession, member *model.Member)      {}
 func (n *mockNotifierForImage) MemberCanceledRSVP(session *model.SpaceSession, member *model.Member) {}
+func (n *mockNotifierForImage) SeriesUpdated(series *model.SessionSeries, affected []model.SpaceSession) {}
+func (n *mockNotifierForImage) SeriesCanceled(series *model.SessionSeries, canceled []model.SpaceSession) {}
 
 // createJPEGMultipart creates a multipart form body with a valid JPEG image.
 func createJPEGMultipart(t *testing.T) (*bytes.Buffer, string) {
