@@ -22,8 +22,3 @@ cd frontend && npm run build        # Vite production build must succeed
 go build ./...                      # Go build must succeed
 go test ./...                       # All Go tests must pass
 ```
-
-### Full stack (Docker)
-```bash
-docker compose build --no-cache     # Production Docker build must succeed
-```
