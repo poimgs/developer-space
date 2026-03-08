@@ -39,6 +39,7 @@ func (m *mockSessionRepo) Create(ctx context.Context, req model.CreateSessionReq
 		StartTime:   req.StartTime,
 		EndTime:     req.EndTime,
 		Status:      "scheduled",
+		Capacity:    req.Capacity,
 		CreatedBy:   createdBy,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
@@ -59,6 +60,7 @@ func (m *mockSessionRepo) CreateBatch(ctx context.Context, sessions []model.Crea
 			StartTime:   req.StartTime,
 			EndTime:     req.EndTime,
 			Status:      "scheduled",
+			Capacity:    req.Capacity,
 			CreatedBy:   createdBy,
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),
@@ -108,6 +110,9 @@ func (m *mockSessionRepo) Update(ctx context.Context, id uuid.UUID, req model.Up
 	if req.EndTime != nil {
 		s.EndTime = *req.EndTime
 	}
+	if req.Capacity != nil {
+		s.Capacity = *req.Capacity
+	}
 	if newStatus != nil {
 		s.Status = *newStatus
 	}
@@ -148,6 +153,7 @@ func (m *mockSessionRepo) addSession(title, date, startTime, endTime, status str
 		StartTime: startTime,
 		EndTime:   endTime,
 		Status:    status,
+		Capacity:  20,
 		CreatedBy: uuid.New(),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -195,6 +201,7 @@ func (m *mockSeriesRepo) Create(ctx context.Context, series model.SessionSeries)
 		EndTime:     series.EndTime,
 		Location:    series.Location,
 		EveryNWeeks: series.EveryNWeeks,
+		Capacity:    series.Capacity,
 		IsActive:    true,
 		CreatedBy:   series.CreatedBy,
 		CreatedAt:   time.Now(),
@@ -241,6 +248,7 @@ func TestCreateSession_Valid(t *testing.T) {
 		Date:      futureDate(),
 		StartTime: "14:00",
 		EndTime:   "18:00",
+		Capacity:  20,
 	}, uuid.New())
 
 	if err != nil {
@@ -273,6 +281,7 @@ func TestCreateSession_MissingTitle(t *testing.T) {
 		Date:      futureDate(),
 		StartTime: "14:00",
 		EndTime:   "18:00",
+		Capacity:  20,
 	}, uuid.New())
 
 	var ve *ValidationError
@@ -293,6 +302,7 @@ func TestCreateSession_InvalidDate(t *testing.T) {
 		Date:      "not-a-date",
 		StartTime: "14:00",
 		EndTime:   "18:00",
+		Capacity:  20,
 	}, uuid.New())
 
 	var ve *ValidationError
@@ -313,6 +323,7 @@ func TestCreateSession_PastDate(t *testing.T) {
 		Date:      "2020-01-01",
 		StartTime: "14:00",
 		EndTime:   "18:00",
+		Capacity:  20,
 	}, uuid.New())
 
 	var ve *ValidationError
@@ -333,6 +344,7 @@ func TestCreateSession_EndBeforeStart(t *testing.T) {
 		Date:      futureDate(),
 		StartTime: "18:00",
 		EndTime:   "14:00",
+		Capacity:  20,
 	}, uuid.New())
 
 	var ve *ValidationError
@@ -353,6 +365,7 @@ func TestCreateSession_RepeatWeekly13(t *testing.T) {
 		Date:         futureDate(),
 		StartTime:    "14:00",
 		EndTime:      "18:00",
+		Capacity:     20,
 		RepeatWeekly: 13,
 	}, uuid.New())
 
@@ -377,6 +390,7 @@ func TestCreateSession_Recurring(t *testing.T) {
 		Date:         baseDate,
 		StartTime:    "14:00",
 		EndTime:      "18:00",
+		Capacity:     20,
 		RepeatWeekly: 3,
 	}, uuid.New())
 
@@ -651,7 +665,7 @@ func TestCreateSession_MultipleValidationErrors(t *testing.T) {
 		t.Fatalf("expected ValidationError, got %v", err)
 	}
 	// Should have errors for all fields
-	expectedFields := []string{"title", "date", "start_time", "end_time", "repeat_weekly"}
+	expectedFields := []string{"title", "date", "start_time", "end_time", "capacity", "repeat_weekly"}
 	for _, field := range expectedFields {
 		if _, ok := ve.Details[field]; !ok {
 			t.Errorf("expected validation error for %q", field)
@@ -710,6 +724,7 @@ func TestCreateSession_RecurringEvery2Weeks(t *testing.T) {
 		Date:         baseDate,
 		StartTime:    "14:00",
 		EndTime:      "18:00",
+		Capacity:     20,
 		RepeatWeekly: 3,
 		EveryNWeeks:  2,
 	}, uuid.New())
@@ -753,6 +768,7 @@ func TestCreateSession_RecurringWithDayOfWeek(t *testing.T) {
 		Date:         baseDate,
 		StartTime:    "14:00",
 		EndTime:      "18:00",
+		Capacity:     20,
 		RepeatWeekly: 2,
 		DayOfWeek:    &targetDay,
 	}, uuid.New())
@@ -794,6 +810,7 @@ func TestCreateSession_InvalidDayOfWeek(t *testing.T) {
 		Date:         futureDate(),
 		StartTime:    "14:00",
 		EndTime:      "18:00",
+		Capacity:     20,
 		RepeatWeekly: 2,
 		DayOfWeek:    &invalidDay,
 	}, uuid.New())
@@ -817,6 +834,7 @@ func TestCreateSession_DayOfWeekWithoutRepeat(t *testing.T) {
 		Date:      futureDate(),
 		StartTime: "14:00",
 		EndTime:   "18:00",
+		Capacity:  20,
 		DayOfWeek: &day,
 	}, uuid.New())
 
@@ -838,6 +856,7 @@ func TestCreateSession_InvalidEveryNWeeks(t *testing.T) {
 		Date:         futureDate(),
 		StartTime:    "14:00",
 		EndTime:      "18:00",
+		Capacity:     20,
 		RepeatWeekly: 2,
 		EveryNWeeks:  5,
 	}, uuid.New())
@@ -860,6 +879,7 @@ func TestCreateSession_EveryNWeeksWithoutRepeat(t *testing.T) {
 		Date:        futureDate(),
 		StartTime:   "14:00",
 		EndTime:     "18:00",
+		Capacity:    20,
 		EveryNWeeks: 2,
 	}, uuid.New())
 
@@ -885,6 +905,64 @@ func TestList_ReturnsEmptySlice(t *testing.T) {
 	}
 	if len(sessions) != 0 {
 		t.Errorf("expected 0 sessions, got %d", len(sessions))
+	}
+}
+
+func TestCreateSession_MissingCapacity(t *testing.T) {
+	repo := newMockSessionRepo()
+	svc := NewSessionService(repo, &mockNotifier{})
+
+	_, err := svc.Create(context.Background(), model.CreateSessionRequest{
+		Title:     "Test",
+		Date:      futureDate(),
+		StartTime: "14:00",
+		EndTime:   "18:00",
+		Capacity:  0,
+	}, uuid.New())
+
+	var ve *ValidationError
+	if !errors.As(err, &ve) {
+		t.Fatalf("expected ValidationError, got %v", err)
+	}
+	if ve.Details["capacity"] != "must be at least 1" {
+		t.Errorf("expected capacity error, got %q", ve.Details["capacity"])
+	}
+}
+
+func TestUpdateSession_CapacityBelowRSVPCount(t *testing.T) {
+	repo := newMockSessionRepo()
+	svc := NewSessionService(repo, &mockNotifier{})
+
+	existing := repo.addSession("Session", futureDate(), "14:00", "18:00", "scheduled")
+	existing.RSVPCount = 5
+
+	cap := 3
+	_, err := svc.Update(context.Background(), existing.ID, model.UpdateSessionRequest{
+		Capacity: &cap,
+	})
+
+	if !errors.Is(err, ErrCapacityBelowRSVP) {
+		t.Errorf("expected ErrCapacityBelowRSVP, got %v", err)
+	}
+}
+
+func TestUpdateSession_CapacityAboveRSVPCount(t *testing.T) {
+	repo := newMockSessionRepo()
+	svc := NewSessionService(repo, &mockNotifier{})
+
+	existing := repo.addSession("Session", futureDate(), "14:00", "18:00", "scheduled")
+	existing.RSVPCount = 3
+
+	cap := 10
+	session, err := svc.Update(context.Background(), existing.ID, model.UpdateSessionRequest{
+		Capacity: &cap,
+	})
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if session.Capacity != 10 {
+		t.Errorf("expected capacity 10, got %d", session.Capacity)
 	}
 }
 

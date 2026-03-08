@@ -25,6 +25,7 @@ var (
 	ErrRSVPSessionPast     = errors.New("cannot RSVP to a past session")
 	ErrRSVPDuplicate       = errors.New("you have already RSVPed to this session")
 	ErrRSVPNotFound        = errors.New("you have not RSVPed to this session")
+	ErrRSVPSessionFull     = errors.New("this session is full")
 )
 
 type RSVPRepository struct {
@@ -48,11 +49,11 @@ func (r *RSVPRepository) CreateAtomic(ctx context.Context, sessionID, memberID u
 	// Lock the session row and fetch it
 	var s model.SpaceSession
 	err = tx.QueryRow(ctx,
-		`SELECT id, title, description, date::text, to_char(start_time, 'HH24:MI'), to_char(end_time, 'HH24:MI'), status, image_url, location, series_id, created_by, created_at, updated_at
+		`SELECT id, title, description, date::text, to_char(start_time, 'HH24:MI'), to_char(end_time, 'HH24:MI'), status, image_url, location, series_id, created_by, created_at, updated_at, capacity
 		 FROM space_sessions
 		 WHERE id = $1
 		 FOR UPDATE`, sessionID,
-	).Scan(&s.ID, &s.Title, &s.Description, &s.Date, &s.StartTime, &s.EndTime, &s.Status, &s.ImageURL, &s.Location, &s.SeriesID, &s.CreatedBy, &s.CreatedAt, &s.UpdatedAt)
+	).Scan(&s.ID, &s.Title, &s.Description, &s.Date, &s.StartTime, &s.EndTime, &s.Status, &s.ImageURL, &s.Location, &s.SeriesID, &s.CreatedBy, &s.CreatedAt, &s.UpdatedAt, &s.Capacity)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
@@ -78,6 +79,11 @@ func (r *RSVPRepository) CreateAtomic(ctx context.Context, sessionID, memberID u
 	).Scan(&count)
 	if err != nil {
 		return nil, fmt.Errorf("counting rsvps: %w", err)
+	}
+
+	// Check capacity
+	if count >= s.Capacity {
+		return nil, ErrRSVPSessionFull
 	}
 
 	// Check for duplicate
@@ -210,13 +216,13 @@ func (r *RSVPRepository) getSession(ctx context.Context, id uuid.UUID) (*model.S
 	var s model.SpaceSession
 	err := r.pool.QueryRow(ctx,
 		`SELECT s.id, s.title, s.description, s.date::text, to_char(s.start_time, 'HH24:MI'), to_char(s.end_time, 'HH24:MI'), s.status,
-		        s.image_url, s.location, s.series_id, s.created_by, s.created_at, s.updated_at,
+		        s.image_url, s.location, s.series_id, s.created_by, s.created_at, s.updated_at, s.capacity,
 		        COALESCE(COUNT(r.id), 0) AS rsvp_count
 		 FROM space_sessions s
 		 LEFT JOIN rsvps r ON r.session_id = s.id
 		 WHERE s.id = $1
 		 GROUP BY s.id`, id,
-	).Scan(&s.ID, &s.Title, &s.Description, &s.Date, &s.StartTime, &s.EndTime, &s.Status, &s.ImageURL, &s.Location, &s.SeriesID, &s.CreatedBy, &s.CreatedAt, &s.UpdatedAt, &s.RSVPCount)
+	).Scan(&s.ID, &s.Title, &s.Description, &s.Date, &s.StartTime, &s.EndTime, &s.Status, &s.ImageURL, &s.Location, &s.SeriesID, &s.CreatedBy, &s.CreatedAt, &s.UpdatedAt, &s.Capacity, &s.RSVPCount)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil

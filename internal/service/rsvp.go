@@ -17,6 +17,7 @@ var (
 	ErrRSVPSessionPast     = errors.New("cannot RSVP to a past session")
 	ErrRSVPDuplicate       = errors.New("you have already RSVPed to this session")
 	ErrRSVPNotFound        = errors.New("you have not RSVPed to this session")
+	ErrRSVPSessionFull     = errors.New("this session is full")
 )
 
 // RSVPRepo defines the data access interface for RSVPs.
@@ -103,6 +104,8 @@ func mapRepoError(err error) error {
 		return ErrRSVPDuplicate
 	case errors.Is(err, repository.ErrRSVPNotFound):
 		return ErrRSVPNotFound
+	case errors.Is(err, repository.ErrRSVPSessionFull):
+		return ErrRSVPSessionFull
 	default:
 		return err
 	}

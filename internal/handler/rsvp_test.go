@@ -79,6 +79,7 @@ func testHandlerSession() *model.SpaceSession {
 		StartTime: "10:00",
 		EndTime:   "18:00",
 		Status:    "scheduled",
+		Capacity:  20,
 		CreatedBy: uuid.New(),
 		RSVPCount: 3,
 	}
@@ -197,6 +198,21 @@ func TestRSVPHandler_RSVP_422_Past(t *testing.T) {
 
 	if rec.Code != http.StatusUnprocessableEntity {
 		t.Fatalf("expected 422, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestRSVPHandler_RSVP_409_SessionFull(t *testing.T) {
+	member := testHandlerMember()
+	repo := &mockRSVPRepoForHandler{createErr: repository.ErrRSVPSessionFull}
+	_, r := setupRSVPHandler(repo, member)
+
+	sessionID := uuid.New()
+	req := httptest.NewRequest("POST", "/api/sessions/"+sessionID.String()+"/rsvp", nil)
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("expected 409, got %d: %s", rec.Code, rec.Body.String())
 	}
 }
 

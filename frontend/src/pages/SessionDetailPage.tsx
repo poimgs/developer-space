@@ -159,7 +159,11 @@ export default function SessionDetailPage() {
                 {session.location}
               </p>
             )}
-            <p>{session.rsvp_count} attending</p>
+            {session.rsvp_count >= session.capacity ? (
+              <p className="font-medium text-red-600 dark:text-red-400">Full</p>
+            ) : (
+              <p>{session.rsvp_count} / {session.capacity} spots</p>
+            )}
           </div>
 
           {!isCanceled && (
@@ -172,6 +176,10 @@ export default function SessionDetailPage() {
                 >
                   Cancel RSVP
                 </button>
+              ) : session.rsvp_count >= session.capacity ? (
+                <span className="rounded-md bg-stone-200 px-4 py-2 text-sm font-medium text-stone-500 dark:bg-stone-700 dark:text-stone-400">
+                  Full
+                </span>
               ) : (
                 <button
                   onClick={() => rsvpMutation.mutate()}

@@ -14,6 +14,7 @@ interface FormErrors {
   date?: string;
   start_time?: string;
   end_time?: string;
+  capacity?: string;
   repeat_weekly?: string;
 }
 
@@ -26,6 +27,7 @@ export default function SessionForm({ session, onSubmit, loading, hideDate, chil
   const [startTime, setStartTime] = useState(session?.start_time ?? '');
   const [endTime, setEndTime] = useState(session?.end_time ?? '');
   const [location, setLocation] = useState(session?.location ?? '');
+  const [capacity, setCapacity] = useState(session?.capacity ?? 20);
   const [repeatMode, setRepeatMode] = useState<'none' | 'weekly' | 'forever'>('none');
   const [repeatCount, setRepeatCount] = useState(1);
   const [dayOfWeek, setDayOfWeek] = useState<number | null>(null);
@@ -40,6 +42,9 @@ export default function SessionForm({ session, onSubmit, loading, hideDate, chil
     if (!endTime) errs.end_time = 'End time is required';
     if (startTime && endTime && endTime <= startTime) {
       errs.end_time = 'End time must be after start time';
+    }
+    if (!isEdit && capacity < 1) {
+      errs.capacity = 'Capacity must be at least 1';
     }
     if (!isEdit && repeatMode === 'weekly' && (repeatCount < 1 || repeatCount > 12)) {
       errs.repeat_weekly = 'Repeat count must be between 1 and 12';
@@ -64,6 +69,7 @@ export default function SessionForm({ session, onSubmit, loading, hideDate, chil
       if (startTime !== session.start_time) data.start_time = startTime;
       if (endTime !== session.end_time) data.end_time = endTime;
       if ((location || '') !== (session.location || '')) data.location = location.trim() || null;
+      if (capacity !== session.capacity) data.capacity = capacity;
       await onSubmit(data);
     } else {
       const data: CreateSessionRequest = {
@@ -71,6 +77,7 @@ export default function SessionForm({ session, onSubmit, loading, hideDate, chil
         date,
         start_time: startTime,
         end_time: endTime,
+        capacity,
       };
       if (description.trim()) data.description = description.trim();
       if (location.trim()) data.location = location.trim();
@@ -131,6 +138,21 @@ export default function SessionForm({ session, onSubmit, loading, hideDate, chil
             className="block w-full rounded-md border border-stone-300 pl-9 pr-3 py-2 text-stone-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none dark:border-stone-600 dark:bg-stone-700 dark:text-stone-100"
           />
         </div>
+      </div>
+
+      <div>
+        <label htmlFor="capacity" className="block text-sm font-medium text-stone-700 dark:text-stone-300">
+          Capacity <span className="text-red-500">*</span>
+        </label>
+        <input
+          id="capacity"
+          type="number"
+          min="1"
+          value={capacity}
+          onChange={(e) => setCapacity(parseInt(e.target.value, 10) || 1)}
+          className="mt-1 block w-full rounded-md border border-stone-300 px-3 py-2 text-stone-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none dark:border-stone-600 dark:bg-stone-700 dark:text-stone-100"
+        />
+        {errors.capacity && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.capacity}</p>}
       </div>
 
       {!hideDate && (

@@ -78,6 +78,7 @@ func testSession() *model.SpaceSession {
 		StartTime: "10:00",
 		EndTime:   "18:00",
 		Status:    "scheduled",
+		Capacity:  20,
 		CreatedBy: uuid.New(),
 		RSVPCount: 3,
 	}
@@ -156,6 +157,16 @@ func TestRSVPService_Create_Duplicate(t *testing.T) {
 	_, err := svc.Create(context.Background(), uuid.New(), uuid.New())
 	if !errors.Is(err, ErrRSVPDuplicate) {
 		t.Fatalf("expected ErrRSVPDuplicate, got %v", err)
+	}
+}
+
+func TestRSVPService_Create_SessionFull(t *testing.T) {
+	repo := &mockRSVPRepo{createErr: repository.ErrRSVPSessionFull}
+	svc := NewRSVPService(repo, &mockMemberGetter{}, &mockRSVPNotifier{})
+
+	_, err := svc.Create(context.Background(), uuid.New(), uuid.New())
+	if !errors.Is(err, ErrRSVPSessionFull) {
+		t.Fatalf("expected ErrRSVPSessionFull, got %v", err)
 	}
 }
 

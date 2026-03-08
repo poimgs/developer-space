@@ -22,6 +22,7 @@ func TestSpaceSessionJSONSerialization(t *testing.T) {
 		CreatedBy:   uuid.New(),
 		CreatedAt:   now,
 		UpdatedAt:   now,
+		Capacity:    20,
 		RSVPCount:   3,
 		UserRSVPed:  true,
 	}

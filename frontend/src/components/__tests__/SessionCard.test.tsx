@@ -25,6 +25,7 @@ function makeSession(overrides: Partial<SpaceSession> = {}): SpaceSession {
     created_by: 'admin-1',
     created_at: '2026-03-01T00:00:00Z',
     updated_at: '2026-03-01T00:00:00Z',
+    capacity: 20,
     rsvp_count: 3,
     user_rsvped: false,
     ...overrides,
@@ -46,9 +47,15 @@ describe('SessionCard', () => {
     expect(screen.getByText('14:00 – 18:00')).toBeInTheDocument();
   });
 
-  it('renders attending count', () => {
-    renderCard(makeSession({ rsvp_count: 3 }));
-    expect(screen.getByText('3 attending')).toBeInTheDocument();
+  it('renders spot count', () => {
+    renderCard(makeSession({ rsvp_count: 3, capacity: 20 }));
+    expect(screen.getByText('3 / 20 spots')).toBeInTheDocument();
+  });
+
+  it('shows Full when at capacity', () => {
+    renderCard(makeSession({ rsvp_count: 20, capacity: 20 }));
+    const fullElements = screen.getAllByText('Full');
+    expect(fullElements.length).toBeGreaterThanOrEqual(1);
   });
 
   it('shows RSVP button when not RSVPed', () => {
@@ -87,9 +94,16 @@ describe('SessionCard', () => {
     expect(onCancelRSVP).toHaveBeenCalledWith('session-1');
   });
 
-  it('shows RSVP button regardless of rsvp count', () => {
-    renderCard(makeSession({ rsvp_count: 8, user_rsvped: false }));
+  it('shows RSVP button when under capacity', () => {
+    renderCard(makeSession({ rsvp_count: 8, capacity: 20, user_rsvped: false }));
     expect(screen.getByRole('button', { name: 'RSVP' })).toBeInTheDocument();
+  });
+
+  it('shows Full badge instead of RSVP when at capacity', () => {
+    renderCard(makeSession({ rsvp_count: 20, capacity: 20, user_rsvped: false }));
+    expect(screen.queryByRole('button', { name: 'RSVP' })).toBeNull();
+    const fullBadges = screen.getAllByText('Full');
+    expect(fullBadges.length).toBeGreaterThanOrEqual(1);
   });
 
   it('does not show RSVP buttons for canceled sessions', () => {

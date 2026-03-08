@@ -98,9 +98,13 @@ export default function SessionCard({ session, attendees, onRSVP, onCancelRSVP, 
 
           {/* Attendance */}
           <div className="mt-2">
-            <span className="text-sm text-stone-600 dark:text-stone-300">
-              {session.rsvp_count} attending
-            </span>
+            {session.rsvp_count >= session.capacity ? (
+              <span className="text-sm font-medium text-red-600 dark:text-red-400">Full</span>
+            ) : (
+              <span className="text-sm text-stone-600 dark:text-stone-300">
+                {session.rsvp_count} / {session.capacity} spots
+              </span>
+            )}
           </div>
 
           {/* Actions */}
@@ -115,6 +119,10 @@ export default function SessionCard({ session, attendees, onRSVP, onCancelRSVP, 
                   >
                     Cancel RSVP
                   </button>
+                ) : session.rsvp_count >= session.capacity ? (
+                  <span className="rounded-md bg-stone-200 px-3 py-1.5 text-sm font-medium text-stone-500 dark:bg-stone-700 dark:text-stone-400">
+                    Full
+                  </span>
                 ) : (
                   <button
                     onClick={handleRSVPClick}

@@ -123,6 +123,10 @@ func (h *SessionHandler) Update(w http.ResponseWriter, r *http.Request) {
 			response.Error(w, http.StatusUnprocessableEntity, "Cannot edit a canceled session")
 			return
 		}
+		if errors.Is(err, service.ErrCapacityBelowRSVP) {
+			response.Error(w, http.StatusConflict, "Capacity cannot be less than current RSVP count")
+			return
+		}
 		response.Error(w, http.StatusInternalServerError, "Internal server error")
 		return
 	}

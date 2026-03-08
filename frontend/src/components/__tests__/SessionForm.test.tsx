@@ -19,6 +19,7 @@ function makeSession(overrides: Partial<SpaceSession> = {}): SpaceSession {
     created_by: 'admin-1',
     created_at: '2026-03-01T00:00:00Z',
     updated_at: '2026-03-01T00:00:00Z',
+    capacity: 20,
     rsvp_count: 3,
     user_rsvped: false,
     ...overrides,
@@ -108,6 +109,7 @@ describe('SessionForm', () => {
         date: '2026-04-01',
         start_time: '14:00',
         end_time: '18:00',
+        capacity: 20,
       });
     });
 
@@ -126,7 +128,7 @@ describe('SessionForm', () => {
       await user.click(screen.getByRole('button', { name: 'Create Session' }));
 
       expect(onSubmit).toHaveBeenCalledWith(
-        expect.objectContaining({ repeat_weekly: 1 }),
+        expect.objectContaining({ repeat_weekly: 1, capacity: 20 }),
       );
     });
 
@@ -319,9 +321,9 @@ describe('SessionForm', () => {
   describe('required field indicators', () => {
     it('shows asterisks on required fields', () => {
       render(<SessionForm onSubmit={vi.fn()} />);
-      // There should be red asterisks for Title, Date, Start time, End time
+      // There should be red asterisks for Title, Capacity, Date, Start time, End time
       const asterisks = document.querySelectorAll('.text-red-500');
-      expect(asterisks.length).toBe(4);
+      expect(asterisks.length).toBe(5);
     });
   });
 });

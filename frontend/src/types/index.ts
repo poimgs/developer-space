@@ -54,6 +54,7 @@ export interface SpaceSession {
   created_by: string;
   created_at: string;
   updated_at: string;
+  capacity: number;
   rsvp_count: number;
   user_rsvped: boolean;
 }
@@ -65,6 +66,7 @@ export interface CreateSessionRequest {
   start_time: string;
   end_time: string;
   location?: string | null;
+  capacity: number;
   repeat_weekly?: number;
   repeat_forever?: boolean;
   day_of_week?: number;
@@ -78,6 +80,7 @@ export interface UpdateSessionRequest {
   start_time?: string;
   end_time?: string;
   location?: string | null;
+  capacity?: number;
 }
 
 export interface UpdateProfileRequest {
@@ -127,6 +130,7 @@ export interface UpdateSeriesRequest {
   end_time?: string;
   image_url?: string | null;
   location?: string | null;
+  capacity?: number;
 }
 
 export interface SessionSeries {
@@ -139,6 +143,7 @@ export interface SessionSeries {
   image_url: string | null;
   location: string | null;
   every_n_weeks: number;
+  capacity: number;
   is_active: boolean;
   created_by: string;
   created_at: string;

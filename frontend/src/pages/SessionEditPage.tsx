@@ -92,6 +92,7 @@ export default function SessionEditPage() {
       if (d.start_time) seriesData.start_time = d.start_time;
       if (d.end_time) seriesData.end_time = d.end_time;
       if (d.location !== undefined) seriesData.location = d.location;
+      if (d.capacity !== undefined) seriesData.capacity = d.capacity;
       if (session!.image_url) seriesData.image_url = session!.image_url;
       await seriesMutation.mutateAsync(seriesData);
     } else {

@@ -17,6 +17,7 @@ var (
 	ErrAlreadyCanceled    = errors.New("session is already canceled")
 	ErrSeriesNotFound     = errors.New("series not found")
 	ErrSeriesInactive     = errors.New("series is already inactive")
+	ErrCapacityBelowRSVP  = errors.New("capacity cannot be less than current RSVP count")
 )
 
 // SessionRepo defines the data access interface for sessions.
@@ -127,6 +128,7 @@ func (s *SessionService) createRecurring(ctx context.Context, req model.CreateSe
 		EndTime:     req.EndTime,
 		Location:    req.Location,
 		EveryNWeeks: interval,
+		Capacity:    req.Capacity,
 		CreatedBy:   createdBy,
 	}
 
@@ -147,6 +149,7 @@ func (s *SessionService) createRecurring(ctx context.Context, req model.CreateSe
 			StartTime:   req.StartTime,
 			EndTime:     req.EndTime,
 			Location:    req.Location,
+			Capacity:    req.Capacity,
 			SeriesID:    &created.ID,
 		}
 		reqs = append(reqs, sessionReq)
@@ -175,6 +178,7 @@ func (s *SessionService) createSeries(ctx context.Context, req model.CreateSessi
 		EndTime:     req.EndTime,
 		Location:    req.Location,
 		EveryNWeeks: interval,
+		Capacity:    req.Capacity,
 		CreatedBy:   createdBy,
 	}
 
@@ -288,6 +292,7 @@ func (s *SessionService) UpdateSeries(ctx context.Context, seriesID uuid.UUID, r
 		StartTime:   req.StartTime,
 		EndTime:     req.EndTime,
 		Location:    req.Location,
+		Capacity:    req.Capacity,
 	}
 	_, err = s.repo.UpdateBulkBySeriesID(ctx, seriesID, sessionReq, req.ImageURL)
 	if err != nil {
@@ -406,6 +411,11 @@ func (s *SessionService) Update(ctx context.Context, id uuid.UUID, req model.Upd
 		return nil, ErrSessionCanceled
 	}
 
+	// Check capacity constraint
+	if req.Capacity != nil && *req.Capacity < existing.RSVPCount {
+		return nil, ErrCapacityBelowRSVP
+	}
+
 	// Validate the update
 	if err := s.validateUpdate(req, existing); err != nil {
 		return nil, err
@@ -499,6 +509,9 @@ func (s *SessionService) validateCreate(req model.CreateSessionRequest) error {
 		if req.EndTime <= req.StartTime {
 			details["end_time"] = "must be after start_time"
 		}
+	}
+	if req.Capacity < 1 {
+		details["capacity"] = "must be at least 1"
 	}
 	if req.RepeatForever && req.RepeatWeekly > 0 {
 		details["repeat_weekly"] = "cannot use both repeat_weekly and repeat_forever"
