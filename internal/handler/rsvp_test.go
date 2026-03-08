@@ -71,6 +71,8 @@ func testHandlerMember() *model.Member {
 	}
 }
 
+func ptrIntHandler(i int) *int { return &i }
+
 func testHandlerSession() *model.SpaceSession {
 	return &model.SpaceSession{
 		ID:        uuid.New(),
@@ -79,7 +81,7 @@ func testHandlerSession() *model.SpaceSession {
 		StartTime: "10:00",
 		EndTime:   "18:00",
 		Status:    "scheduled",
-		Capacity:  20,
+		Capacity:  ptrIntHandler(20),
 		CreatedBy: uuid.New(),
 		RSVPCount: 3,
 	}

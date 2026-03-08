@@ -415,6 +415,7 @@ func (s *SessionService) Update(ctx context.Context, id uuid.UUID, req model.Upd
 	if req.Capacity != nil && *req.Capacity < existing.RSVPCount {
 		return nil, ErrCapacityBelowRSVP
 	}
+	// Cannot set capacity to nil if existing has a value — omitted capacity means "no change"
 
 	// Validate the update
 	if err := s.validateUpdate(req, existing); err != nil {
@@ -510,7 +511,7 @@ func (s *SessionService) validateCreate(req model.CreateSessionRequest) error {
 			details["end_time"] = "must be after start_time"
 		}
 	}
-	if req.Capacity < 1 {
+	if req.Capacity != nil && *req.Capacity < 1 {
 		details["capacity"] = "must be at least 1"
 	}
 	if req.RepeatForever && req.RepeatWeekly > 0 {

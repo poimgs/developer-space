@@ -11,6 +11,7 @@ import (
 func TestSpaceSessionJSONSerialization(t *testing.T) {
 	desc := "A collaborative session"
 	now := time.Now().Truncate(time.Millisecond)
+	cap := 20
 	s := SpaceSession{
 		ID:          uuid.New(),
 		Title:       "Morning Session",
@@ -22,7 +23,7 @@ func TestSpaceSessionJSONSerialization(t *testing.T) {
 		CreatedBy:   uuid.New(),
 		CreatedAt:   now,
 		UpdatedAt:   now,
-		Capacity:    20,
+		Capacity:    &cap,
 		RSVPCount:   3,
 		UserRSVPed:  true,
 	}

@@ -70,6 +70,8 @@ func testMember() *model.Member {
 	}
 }
 
+func ptrIntRSVP(i int) *int { return &i }
+
 func testSession() *model.SpaceSession {
 	return &model.SpaceSession{
 		ID:        uuid.New(),
@@ -78,7 +80,7 @@ func testSession() *model.SpaceSession {
 		StartTime: "10:00",
 		EndTime:   "18:00",
 		Status:    "scheduled",
-		Capacity:  20,
+		Capacity:  ptrIntRSVP(20),
 		CreatedBy: uuid.New(),
 		RSVPCount: 3,
 	}

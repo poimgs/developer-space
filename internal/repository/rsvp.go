@@ -81,8 +81,8 @@ func (r *RSVPRepository) CreateAtomic(ctx context.Context, sessionID, memberID u
 		return nil, fmt.Errorf("counting rsvps: %w", err)
 	}
 
-	// Check capacity
-	if count >= s.Capacity {
+	// Check capacity (only when a limit is set)
+	if s.Capacity != nil && count >= *s.Capacity {
 		return nil, ErrRSVPSessionFull
 	}
 

@@ -25,7 +25,7 @@ function makeSession(overrides: Partial<SpaceSession> = {}): SpaceSession {
     created_by: 'admin-1',
     created_at: '2026-03-01T00:00:00Z',
     updated_at: '2026-03-01T00:00:00Z',
-    capacity: 20,
+    capacity: null,
     rsvp_count: 3,
     user_rsvped: false,
     ...overrides,
@@ -47,9 +47,14 @@ describe('SessionCard', () => {
     expect(screen.getByText('14:00 – 18:00')).toBeInTheDocument();
   });
 
-  it('renders spot count', () => {
+  it('renders spot count when capacity is set', () => {
     renderCard(makeSession({ rsvp_count: 3, capacity: 20 }));
     expect(screen.getByText('3 / 20 spots')).toBeInTheDocument();
+  });
+
+  it('renders attending count when capacity is null', () => {
+    renderCard(makeSession({ rsvp_count: 3, capacity: null }));
+    expect(screen.getByText('3 attending')).toBeInTheDocument();
   });
 
   it('shows Full when at capacity', () => {
@@ -59,7 +64,7 @@ describe('SessionCard', () => {
   });
 
   it('shows RSVP button when not RSVPed', () => {
-    renderCard(makeSession({ user_rsvped: false, rsvp_count: 3 }));
+    renderCard(makeSession({ user_rsvped: false, rsvp_count: 3, capacity: null }));
     expect(screen.getByRole('button', { name: 'RSVP' })).toBeInTheDocument();
   });
 

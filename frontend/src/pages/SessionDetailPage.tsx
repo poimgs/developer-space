@@ -159,10 +159,12 @@ export default function SessionDetailPage() {
                 {session.location}
               </p>
             )}
-            {session.rsvp_count >= session.capacity ? (
+            {session.capacity != null && session.rsvp_count >= session.capacity ? (
               <p className="font-medium text-red-600 dark:text-red-400">Full</p>
-            ) : (
+            ) : session.capacity != null ? (
               <p>{session.rsvp_count} / {session.capacity} spots</p>
+            ) : (
+              <p>{session.rsvp_count} attending</p>
             )}
           </div>
 
@@ -176,7 +178,7 @@ export default function SessionDetailPage() {
                 >
                   Cancel RSVP
                 </button>
-              ) : session.rsvp_count >= session.capacity ? (
+              ) : session.capacity != null && session.rsvp_count >= session.capacity ? (
                 <span className="rounded-md bg-stone-200 px-4 py-2 text-sm font-medium text-stone-500 dark:bg-stone-700 dark:text-stone-400">
                   Full
                 </span>

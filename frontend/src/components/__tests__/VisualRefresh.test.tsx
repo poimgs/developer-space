@@ -38,7 +38,7 @@ function makeSession(overrides: Partial<SpaceSession> = {}): SpaceSession {
     created_by: 'admin-1',
     created_at: '2026-03-01T00:00:00Z',
     updated_at: '2026-03-01T00:00:00Z',
-    capacity: 20,
+    capacity: null,
     rsvp_count: 3,
     user_rsvped: false,
     ...overrides,
@@ -153,6 +153,19 @@ describe('Visual Refresh — Warm Palette', () => {
         </MemoryRouter>,
       );
       expect(screen.getByText('3 / 20 spots')).toBeInTheDocument();
+    });
+
+    it('shows attending count when capacity is null', () => {
+      render(
+        <MemoryRouter>
+          <SessionCard
+            session={makeSession({ rsvp_count: 3, capacity: null })}
+            onRSVP={vi.fn()}
+            onCancelRSVP={vi.fn()}
+          />
+        </MemoryRouter>,
+      );
+      expect(screen.getByText('3 attending')).toBeInTheDocument();
     });
 
     it('has no indigo classes anywhere in the card', () => {

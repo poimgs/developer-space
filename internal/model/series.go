@@ -16,7 +16,7 @@ type SessionSeries struct {
 	ImageURL    *string   `json:"image_url"`
 	Location    *string   `json:"location"`
 	EveryNWeeks int       `json:"every_n_weeks"`
-	Capacity    int       `json:"capacity"`
+	Capacity    *int      `json:"capacity"`
 	IsActive    bool      `json:"is_active"`
 	CreatedBy   uuid.UUID `json:"created_by"`
 	CreatedAt   time.Time `json:"created_at"`

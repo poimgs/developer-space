@@ -20,7 +20,7 @@ type SpaceSession struct {
 	CreatedBy   uuid.UUID  `json:"created_by"`
 	CreatedAt   time.Time  `json:"created_at"`
 	UpdatedAt   time.Time  `json:"updated_at"`
-	Capacity    int        `json:"capacity"`
+	Capacity    *int       `json:"capacity"`
 	RSVPCount   int        `json:"rsvp_count"`
 	UserRSVPed  bool       `json:"user_rsvped,omitempty"`
 }
@@ -32,7 +32,7 @@ type CreateSessionRequest struct {
 	StartTime     string     `json:"start_time"`
 	EndTime       string     `json:"end_time"`
 	Location      *string    `json:"location"`
-	Capacity      int        `json:"capacity"`
+	Capacity      *int       `json:"capacity"`
 	RepeatWeekly  int        `json:"repeat_weekly"`
 	RepeatForever bool       `json:"repeat_forever"`
 	DayOfWeek     *int       `json:"day_of_week"`
