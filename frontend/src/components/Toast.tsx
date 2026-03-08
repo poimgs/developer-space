@@ -1,9 +1,9 @@
 import { useToast } from '../context/ToastContext';
 
 const typeStyles = {
-  success: 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200',
-  error: 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200',
-  info: 'border-amber-500 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200',
+  success: 'border-green-500 bg-green-50 dark:bg-green-900 text-green-800 dark:text-green-200',
+  error: 'border-red-500 bg-red-50 dark:bg-red-900 text-red-800 dark:text-red-200',
+  info: 'border-amber-500 bg-amber-50 dark:bg-amber-900 text-amber-800 dark:text-amber-200',
 };
 
 export default function Toast() {
@@ -12,7 +12,7 @@ export default function Toast() {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-50 flex flex-col gap-2" role="status" aria-live="polite">
+    <div className="fixed bottom-4 left-4 z-50 flex flex-col gap-2" role="status" aria-live="polite">
       {toasts.map((toast) => (
         <div
           key={toast.id}
