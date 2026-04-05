@@ -1,4 +1,4 @@
-import type { APIError, APIResponse, Channel, CreateChannelRequest, MessagePage, PublicMember } from '../types';
+import type { APIError, APIResponse, PublicMember } from '../types';
 
 export class ApiError extends Error {
   status: number;
@@ -76,25 +76,4 @@ export const api = {
 
   deleteSeriesImage: (seriesId: string) =>
     request<unknown>(`/api/sessions/series/${seriesId}/image`, { method: 'DELETE' }),
-
-  // Channels
-  listChannels: () =>
-    request<APIResponse<Channel[]>>('/api/channels'),
-
-  getChannel: (id: string) =>
-    request<APIResponse<Channel>>(`/api/channels/${id}`),
-
-  createChannel: (data: CreateChannelRequest) =>
-    request<APIResponse<Channel>>('/api/channels', { method: 'POST', body: JSON.stringify(data) }),
-
-  deleteChannel: (id: string) =>
-    request<unknown>(`/api/channels/${id}`, { method: 'DELETE' }),
-
-  // Messages
-  listMessages: (channelId: string, cursor?: string, limit = 50) => {
-    const params = new URLSearchParams();
-    if (cursor) params.set('cursor', cursor);
-    params.set('limit', String(limit));
-    return request<APIResponse<MessagePage>>(`/api/channels/${channelId}/messages?${params}`);
-  },
 };
