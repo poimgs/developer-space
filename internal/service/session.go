@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
@@ -52,6 +53,7 @@ type SessionService struct {
 	notifier    Notifier
 	emailSender NotificationEmailSender
 	rsvpLister  RSVPMemberLister
+	channelSvc  *ChannelService
 }
 
 func NewSessionService(repo SessionRepo, notifier Notifier) *SessionService {
@@ -61,6 +63,11 @@ func NewSessionService(repo SessionRepo, notifier Notifier) *SessionService {
 // SetSeriesRepo configures the session service to support recurring series.
 func (s *SessionService) SetSeriesRepo(seriesRepo SeriesRepo) {
 	s.seriesRepo = seriesRepo
+}
+
+// SetChannelService configures auto-creation of chat channels for new sessions.
+func (s *SessionService) SetChannelService(channelSvc *ChannelService) {
+	s.channelSvc = channelSvc
 }
 
 func (s *SessionService) Create(ctx context.Context, req model.CreateSessionRequest, createdBy uuid.UUID) (any, error) {
@@ -82,6 +89,7 @@ func (s *SessionService) Create(ctx context.Context, req model.CreateSessionRequ
 		return nil, fmt.Errorf("creating session: %w", err)
 	}
 
+	s.createSessionChannel(ctx, session.Title, session.ID, createdBy)
 	go s.notifier.SessionCreated(session)
 
 	return session, nil
@@ -160,6 +168,9 @@ func (s *SessionService) createRecurring(ctx context.Context, req model.CreateSe
 		return nil, fmt.Errorf("creating recurring sessions: %w", err)
 	}
 
+	for _, sess := range sessions {
+		s.createSessionChannel(ctx, sess.Title, sess.ID, createdBy)
+	}
 	go s.notifier.SessionsCreatedRecurring(sessions)
 
 	return sessions, nil
@@ -194,6 +205,9 @@ func (s *SessionService) createSeries(ctx context.Context, req model.CreateSessi
 		return nil, fmt.Errorf("generating series sessions: %w", err)
 	}
 
+	for _, sess := range sessions {
+		s.createSessionChannel(ctx, sess.Title, sess.ID, createdBy)
+	}
 	go s.notifier.SessionsCreatedRecurring(sessions)
 
 	return sessions, nil
@@ -644,6 +658,16 @@ func (s *SessionService) ClearImageURL(ctx context.Context, id uuid.UUID) (*mode
 		return nil, fmt.Errorf("clearing image url: %w", err)
 	}
 	return updated, nil
+}
+
+// createSessionChannel creates a chat channel for a session, logging errors without failing.
+func (s *SessionService) createSessionChannel(ctx context.Context, title string, sessionID uuid.UUID, createdBy uuid.UUID) {
+	if s.channelSvc == nil {
+		return
+	}
+	if _, err := s.channelSvc.CreateForSession(ctx, title, sessionID, createdBy); err != nil {
+		slog.Warn("failed to create session channel", "session_id", sessionID, "error", err)
+	}
 }
 
 // GetImageURL returns the current image URL for a session, or empty string if none.

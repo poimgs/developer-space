@@ -14,6 +14,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/joho/godotenv"
 
+	"github.com/developer-space/api/internal/chat"
 	"github.com/developer-space/api/internal/config"
 	"github.com/developer-space/api/internal/database"
 	"github.com/developer-space/api/internal/handler"
@@ -75,6 +76,8 @@ func main() {
 	sessionRepo := repository.NewSessionRepository(pool)
 	seriesRepo := repository.NewSeriesRepository(pool)
 	rsvpRepo := repository.NewRSVPRepository(pool)
+	channelRepo := repository.NewChannelRepository(pool)
+	messageRepo := repository.NewMessageRepository(pool)
 
 	emailSender := service.NewResendEmailSender(cfg.ResendAPIKey, cfg.ResendFromEmail)
 	// Notifications disabled for now
@@ -82,8 +85,11 @@ func main() {
 	slog.Info("all notifications disabled")
 	memberSvc := service.NewMemberService(memberRepo, emailSender, cfg.FrontendURL)
 	authSvc := service.NewAuthService(tokenRepo, memberRepo, emailSender, cfg.SessionSecret, cfg.FrontendURL, cfg.IsSecure())
+	channelSvc := service.NewChannelService(channelRepo)
+	messageSvc := service.NewMessageService(messageRepo, channelRepo)
 	sessionSvc := service.NewSessionService(sessionRepo, notifier)
 	sessionSvc.SetSeriesRepo(seriesRepo)
+	sessionSvc.SetChannelService(channelSvc)
 	// sessionSvc.SetEmailNotifier(emailSender, rsvpRepo) // notifications disabled for now
 	rsvpSvc := service.NewRSVPService(rsvpRepo, memberRepo, notifier)
 
@@ -94,6 +100,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Start WebSocket hub
+	wsHub := chat.NewHub()
+	go wsHub.Run()
+
 	memberHandler := handler.NewMemberHandler(memberSvc)
 	authHandler := handler.NewAuthHandler(authSvc)
 	sessionHandler := handler.NewSessionHandler(sessionSvc)
@@ -101,8 +111,11 @@ func main() {
 	profileHandler := handler.NewProfileHandler(authSvc)
 	imageHandler := handler.NewImageHandler(sessionSvc, uploadsDir)
 	skillsHandler := handler.NewSkillsHandler(memberSvc)
+	channelHandler := handler.NewChannelHandler(channelSvc)
+	messageHandler := handler.NewMessageHandler(messageSvc)
+	wsHandler := handler.NewWSHandler(wsHub, channelSvc, messageSvc, cfg.FrontendURL)
 
-	handler.RegisterRoutes(r, memberHandler, authHandler, sessionHandler, rsvpHandler, profileHandler, imageHandler, skillsHandler, authSvc, memberRepo)
+	handler.RegisterRoutes(r, memberHandler, authHandler, sessionHandler, rsvpHandler, profileHandler, imageHandler, skillsHandler, channelHandler, messageHandler, wsHandler, authSvc, memberRepo)
 
 	// Serve uploaded files
 	fileServer := http.FileServer(http.Dir("."))

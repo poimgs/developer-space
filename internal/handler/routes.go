@@ -7,7 +7,7 @@ import (
 	"github.com/developer-space/api/internal/service"
 )
 
-func RegisterRoutes(r chi.Router, memberHandler *MemberHandler, authHandler *AuthHandler, sessionHandler *SessionHandler, rsvpHandler *RSVPHandler, profileHandler *ProfileHandler, imageHandler *ImageHandler, skillsHandler *SkillsHandler, authSvc *service.AuthService, memberRepo middleware.MemberLookup) {
+func RegisterRoutes(r chi.Router, memberHandler *MemberHandler, authHandler *AuthHandler, sessionHandler *SessionHandler, rsvpHandler *RSVPHandler, profileHandler *ProfileHandler, imageHandler *ImageHandler, skillsHandler *SkillsHandler, channelHandler *ChannelHandler, messageHandler *MessageHandler, wsHandler *WSHandler, authSvc *service.AuthService, memberRepo middleware.MemberLookup) {
 	// Public auth routes
 	r.Route("/api/auth", func(r chi.Router) {
 		r.Post("/magic-link", authHandler.RequestMagicLink)
@@ -68,5 +68,25 @@ func RegisterRoutes(r chi.Router, memberHandler *MemberHandler, authHandler *Aut
 			r.Post("/{id}/image", imageHandler.Upload)
 			r.Delete("/{id}/image", imageHandler.Delete)
 		})
+	})
+
+	// Chat channels — all authenticated, admin for create/delete
+	r.Route("/api/channels", func(r chi.Router) {
+		r.Use(middleware.Auth(authSvc, memberRepo))
+		r.Get("/", channelHandler.List)
+		r.Get("/{id}", channelHandler.GetByID)
+		r.Get("/{id}/messages", messageHandler.ListHistory)
+
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.Admin)
+			r.Post("/", channelHandler.Create)
+			r.Delete("/{id}", channelHandler.Delete)
+		})
+	})
+
+	// WebSocket — authenticated
+	r.Route("/api/ws", func(r chi.Router) {
+		r.Use(middleware.Auth(authSvc, memberRepo))
+		r.Get("/", wsHandler.Connect)
 	})
 }

@@ -149,3 +149,37 @@ export interface SessionSeries {
   created_at: string;
   updated_at: string;
 }
+
+export interface Channel {
+  id: string;
+  name: string;
+  type: 'general' | 'session';
+  session_id: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  channel_id: string;
+  member_id: string;
+  author_name: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MessagePage {
+  messages: ChatMessage[];
+  cursor: string | null;
+}
+
+export interface WSMessage {
+  type: string;
+  payload: unknown;
+}
+
+export interface CreateChannelRequest {
+  name: string;
+}

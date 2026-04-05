@@ -6,6 +6,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Toast from './components/Toast';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
+import { WebSocketProvider } from './context/WebSocketContext';
+import ChatPage from './pages/ChatPage';
 import LoginPage from './pages/LoginPage';
 import MemberProfilePage from './pages/MemberProfilePage';
 import MembersPage from './pages/MembersPage';
@@ -29,28 +31,32 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <ToastProvider>
-          <Toast />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/auth/verify" element={<VerifyPage />} />
-              <Route element={<ProtectedRoute />}>
-                <Route element={<Layout />}>
-                  <Route path="/" element={<SessionsPage />} />
-                  <Route path="/sessions/:id" element={<SessionDetailPage />} />
-                  <Route path="/profile" element={<ProfilePage />} />
-                  <Route path="/profile/:id" element={<MemberProfilePage />} />
-                  <Route element={<AdminRoute />}>
-                    <Route path="/sessions/new" element={<SessionCreatePage />} />
-                    <Route path="/sessions/:id/edit" element={<SessionEditPage />} />
-                    <Route path="/members" element={<MembersPage />} />
+        <WebSocketProvider>
+          <ToastProvider>
+            <Toast />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/auth/verify" element={<VerifyPage />} />
+                <Route element={<ProtectedRoute />}>
+                  <Route element={<Layout />}>
+                    <Route path="/" element={<SessionsPage />} />
+                    <Route path="/sessions/:id" element={<SessionDetailPage />} />
+                    <Route path="/chat" element={<ChatPage />} />
+                    <Route path="/chat/:channelId" element={<ChatPage />} />
+                    <Route path="/profile" element={<ProfilePage />} />
+                    <Route path="/profile/:id" element={<MemberProfilePage />} />
+                    <Route element={<AdminRoute />}>
+                      <Route path="/sessions/new" element={<SessionCreatePage />} />
+                      <Route path="/sessions/:id/edit" element={<SessionEditPage />} />
+                      <Route path="/members" element={<MembersPage />} />
+                    </Route>
                   </Route>
                 </Route>
-              </Route>
-            </Routes>
-          </BrowserRouter>
-        </ToastProvider>
+              </Routes>
+            </BrowserRouter>
+          </ToastProvider>
+        </WebSocketProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
